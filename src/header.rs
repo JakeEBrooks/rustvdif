@@ -1,23 +1,10 @@
-//! Functionality for interacting with VDIF header information.
+//! Functionality for interacting with VDIF headers and header information.
 //! 
 //! This module gives you easy access to VDIF header information by providing a variety
-//! of convenience methods for accessing the values defined in the VDIF specification.
-//! 
-//! # Examples
-//! The [`VDIFHeader`] object has many methods for accessing VDIF meta data:
-//! ```rust
-//! let file = File::open("my/vdif/file").unwrap();
-//! let mut reader = VDIFReader::new(file).unwrap();
-//! let first_header = reader.get_header().unwrap();
-//! // Print the size in bytes of the associated data frame.
-//! println!("{}", first_header.byte_size());
-//! ```
+//! of convenience methods for accessing the fields defined in the VDIF specification.
 
-use std::string::FromUtf8Error;
-
-/// The size of a VDIF header.
-pub const VDIF_HEADER_SIZE: usize = 32;
-const VDIF_WORD_SIZE:       usize = 4;
+pub(crate) const VDIF_HEADER_SIZE:      usize = 8;
+pub(crate) const VDIF_HEADER_BYTESIZE:  usize = 32;
 
 const MASK_IS_VALID:        u32 = 0b10000000000000000000000000000000;
 const MASK_IS_LEGACY:       u32 = 0b01000000000000000000000000000000;
@@ -50,13 +37,28 @@ pub enum StationID {
 /// information from the header.
 #[derive(Debug, Default)]
 pub struct VDIFHeader {
-    data: [u8; VDIF_HEADER_SIZE]
+    words: [u32; VDIF_HEADER_SIZE]
 }
 
 impl VDIFHeader {
-    /// Construct a new [`VDIFHeader`] from a fixed size byte array.
-    pub fn new(data: [u8; VDIF_HEADER_SIZE]) -> Self {
-        return Self {data: data}
+    /// Construct a new [`VDIFHeader`] from a fixed size array of [`u32`]s.
+    pub fn new(words: [u32; VDIF_HEADER_SIZE]) -> Self {
+        return Self {words: words}
+    }
+
+    /// Construct a new [`VDIFHeader`] from a fixed size array of bytes, arranged according to the VDIF standard.
+    pub fn frombytes(bytes: [u8; VDIF_HEADER_BYTESIZE]) -> Self {
+        // I can't see any case where these panic
+        let w0: u32 = u32::from_le_bytes(bytes[0..4].try_into().unwrap());
+        let w1: u32 = u32::from_le_bytes(bytes[4..8].try_into().unwrap());
+        let w2: u32 = u32::from_le_bytes(bytes[8..12].try_into().unwrap());
+        let w3: u32 = u32::from_le_bytes(bytes[12..16].try_into().unwrap());
+        let w4: u32 = u32::from_le_bytes(bytes[16..20].try_into().unwrap());
+        let w5: u32 = u32::from_le_bytes(bytes[20..24].try_into().unwrap());
+        let w6: u32 = u32::from_le_bytes(bytes[24..28].try_into().unwrap());
+        let w7: u32 = u32::from_le_bytes(bytes[28..32].try_into().unwrap());
+
+        return Self{words: [w0, w1, w2, w3, w4, w5, w6, w7]}
     }
 
     /// If the associated data frame is valid, return `true`, else return `false`.
@@ -75,8 +77,8 @@ impl VDIFHeader {
         return self.extract_with_mask(0, MASK_IS_LEGACY) != 0
     }
 
-    /// Get the timestamp of the associated data frame. See the VDIF specification for details.
-    pub fn time(&self) -> u32 {
+    /// Get the raw timestamp in seconds of the associated data frame. See the VDIF specification for details.
+    pub fn raw_time(&self) -> u32 {
         return self.extract_with_mask(0, MASK_TIME)
     }
 
@@ -84,8 +86,6 @@ impl VDIFHeader {
     pub fn raw_ref_epoch(&self) -> u32 {
         return self.extract_with_mask(1, MASK_REF_EPOCH) >> 24
     }
-
-    // TODO: return a time::Date representing the reference epoch.
 
     /// Get the data frame number of the associated data frame.
     pub fn frame_no(&self) -> u32 {
@@ -97,16 +97,24 @@ impl VDIFHeader {
         return self.extract_with_mask(2, MASK_VERSION_NO) >> 29
     }
 
-    //  TODO: Read the spec for what channel number actually means.
+    /// Get the channel field without performing exponentiation.
+    pub fn raw_channel_no(&self) -> u32 {
+        return self.extract_with_mask(2, MASK_LOG2_CHANNELS) >> 24
+    }
 
     /// Get the channel number of the associated data frame.
     pub fn channel_no(&self) -> u32 {
         return 2u32.pow(self.extract_with_mask(2, MASK_LOG2_CHANNELS) >> 24)
     }
 
-    /// Get the total size of the associated data frame, including *both* the header *and* the payload.
-    pub fn byte_size(&self) -> u32 {
+    /// Get the total size in bytes of the associated data frame, including *both* the header *and* the payload.
+    pub fn bytesize(&self) -> u32 {
         return self.extract_with_mask(2, MASK_BYTE_SIZE) * 8
+    }
+
+    /// Get the total size in bytes of the associated payload.
+    pub fn payload_bytesize(&self) -> u32 {
+        return self.bytesize() - VDIF_HEADER_BYTESIZE as u32
     }
 
     /// Return `true` if the associated data frame carries real data, and `false` if it is complex.
@@ -134,35 +142,15 @@ impl VDIFHeader {
         return self.extract_with_mask(3, MASK_STATION_ID)
     }
 
-    /// Get the station identifier of the associated data frame as a [`String`].
-    pub fn station_str(&self) -> Result<String, FromUtf8Error> {
-        // FIXME: make this into something less hard coded. Probably breaks on big endian systems
-        let mut buf: [u8; 2] = [0; 2];
-        buf.copy_from_slice(&self.data[12..14]);
-        buf.reverse();
-        return String::from_utf8(buf.to_vec())
-    }
-
-    /// Get an enum containing the station two-character identifier if possible, otherwise it contains the numeric station ID.
-    pub fn station(&self) -> StationID {
-        match self.station_str() {
-            Ok(station_string) => StationID::Name(station_string),
-            Err(_) => StationID::ID(self.station_id())
-        }
-    }
-
     /// Get a reference to the underlying byte data of this header.
-    pub fn get_ref(&self) -> &[u8; VDIF_HEADER_SIZE] {
-        return &self.data
+    pub fn get_ref(&self) -> &[u32; VDIF_HEADER_SIZE] {
+        return &self.words
     }
 
     /// Extract a copy of the desired 32-bit word.
     /// This a low-level method you probably shouldn't use.
     pub fn extract(&self, word: usize) -> u32 {
-        let mut buf: [u8; VDIF_WORD_SIZE] = [0; VDIF_WORD_SIZE];
-        let ind = VDIF_WORD_SIZE*word;
-        buf.copy_from_slice(&self.data[ind..ind+VDIF_WORD_SIZE]);
-        return u32::from_le_bytes(buf)
+        return self.words[word]
     }
 
     /// Extract a copy of the desired 32-bit word and mask it accordingly.
@@ -176,27 +164,9 @@ impl VDIFHeader {
 impl std::fmt::Display for VDIFHeader {
     // FIXME: Merge the time and ref epoch fields into one datetime
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let station_str = match self.station_str() {
-            Ok(idstring) => idstring,
-            Err(_) => "N/A".to_string()
-        };
-        write!(f, "(Valid: {}, Time: {}s, Ref Epoch: {}, Frame: {}, Channel: {}, Size: {}, Real: {}, Bits/sample: {}, Thread: {}, Station: {}, Station ID: {})",
-                self.is_valid(), self.time(), self.raw_ref_epoch(),
-                self.frame_no(), self.channel_no(), self.byte_size(), self.is_real(),
-                self.bits_per_sample(), self.thread_id(), station_str, self.station_id())
+        write!(f, "(Valid: {}, Time: {}s, Frame: {}, Channels: {}, Size: {}, Real: {}, Bits/sample: {}, Thread: {}, Station ID: {})",
+                self.is_valid(), self.raw_time(),
+                self.frame_no(), self.channel_no(), self.bytesize(), self.is_real(),
+                self.bits_per_sample(), self.thread_id(), self.station_id())
     }
 }
-
-// /// Construct a [`VDIFHeader`] from the given information.
-// pub fn construct(isvalid: &bool,
-//                 date: &time::Date,
-//                 time: &time::Time,
-//                 frameno: &u32,
-//                 channelno: &u32,
-//                 payloadsize: &u32,
-//                 isreal: &bool,
-//                 bits_per_sample: &u32,
-//                 threadid: &u32,
-//                 stationid: &StationID) -> VDIFHeader {
-//     return VDIFHeader{data: [0; VDIF_HEADER_SIZE]}
-// }
