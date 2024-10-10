@@ -1,46 +1,27 @@
-use std::io::{Error, Result};
+//! Provides functionality related to VDIF payloads.
 
-use crate::header::VDIFHeader;
-
+/// A VDIF payload, consisting of a series of [`u32`]s.
 pub struct VDIFPayload {
     words: Box<[u32]>
 }
 
 impl VDIFPayload {
+    /// Construct a new [`VDIFPayload`] from a [`Box<u32>`] object.
     pub fn new(words: Box<[u32]>) -> Self {
         return Self{words: words}
     }
 
-    pub fn frombytes(bytes: Box<[u8]>, header: &VDIFHeader) -> Result<Self> {
-        // Check that the correct number of bytes was passed in
-        let payload_size = header.payload_bytesize() as usize;
-        let bytes_size = bytes.len();
-        if bytes_size != payload_size {
-            return Err(Error::new(std::io::ErrorKind::InvalidInput, format!("The VDIF header indicates a paylaod of {} bytes, but {} bytes were supplied", payload_size, bytes.len())))
-        }
-
-        let num_words = bytes_size / 4;
-        // Allocate memory for the payload data
-        let mut payload: Box<[u32]> = vec![0; num_words].into_boxed_slice();
-        // Make chunks of 4 bytes
-        let mut iter = bytes.chunks(4);
-
-        // Iterate over all 4 byte chunks, converting them into u32 and storing in the payload
-        for i in 0..num_words {
-            payload[i] = u32::from_le_bytes(iter.next().unwrap().try_into().unwrap());
-        }
-
-        return Ok(VDIFPayload::new(payload))
-    }
-
-    pub fn size(&self) -> usize {
+    /// Return the size in 32-bit words of this payload.
+    pub fn wordsize(&self) -> usize {
         return self.words.len()
     }
 
+    /// Return the size in bytes of this payload.
     pub fn bytesize(&self) -> usize {
-        return self.size()*4
+        return self.wordsize()*4
     }
 
+    /// Return a reference to underlying [`u32`] slice.
     pub fn get_ref(&self) -> &[u32] {
         return &self.words
     }

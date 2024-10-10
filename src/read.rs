@@ -1,86 +1,98 @@
-//! Implements the central [`VDIFReader`] object of this library.
+//! Implements functionality for reading VDIF data from a variety of data sources.
 
-use std::{io::{BufReader, ErrorKind, Read, Result}, path::Path};
 use std::fs::File;
+use std::io::{BufReader, Read, Seek, Result};
+use std::path::Path;
 
-use crate::{frame::VDIFFrame, header::{VDIFHeader, VDIF_HEADER_BYTESIZE}, payload::VDIFPayload};
+use crate::frame::VDIFFrame;
+use crate::header::VDIFHeader;
+use crate::parsing;
+use crate::payload::VDIFPayload;
 
-pub struct VDIFReader<T: Read> {
-    reader: T
+/// Wraps a [`File`] containing VDIF encoded data, and provides methods for extracting
+/// that data in a controlled manner.
+/// 
+/// The methods below behave in a similar manner to [`std::io::Read::read`] in that each read also advances an internal cursor
+/// , so be careful of the order that you call these functions in. If possible, constrain your programs to call either
+/// [`frame`](VDIFFileReader::frame), [`find_nextframe`](VDIFFileReader::find_nextframe), or sequential blocks of [`header`][`VDIFFileReader::header`] and 
+/// [`nextframe`](VDIFFileReader::nextframe).
+/// 
+/// VDIF files are often quite large, so buffered IO is the default.
+pub struct VDIFFileReader {
+    file: BufReader<File>,
 }
 
-impl<T: Read> VDIFReader<T> {
-    pub fn new(reader: T) -> Self {
-        return Self{reader: reader}
+
+impl VDIFFileReader {
+    /// Construct a new [`VDIFFileReader`] from a `BufReader<File>`.
+    pub fn new(file: BufReader<File>) -> Self {
+        return Self{file: file}
     }
 
-    pub fn get_header(&mut self) -> Result<VDIFHeader> {
-        let mut buf: [u8; VDIF_HEADER_BYTESIZE] = [0; VDIF_HEADER_BYTESIZE];
+    /// Construct a new [`VDIFFileReader`] from the specified file path.
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
+        return Ok(Self{file: BufReader::new(File::open(path)?)})
+    }
+
+    /// Construct a new [`VDIFFileReader`] from the specified file path, also specifying the size of the underlying
+    /// [`BufReader`].
+    pub fn with_capacity<P: AsRef<Path>>(path: P, capacity: usize) -> Result<Self> {
+        return Ok(Self{file: BufReader::with_capacity(capacity, File::open(path)?)})
+    }
+
+    /// Seek to the next frame by advancing the internal cursor by the number of bytes indicated in the
+    /// provided [`VDIFHeader`].
+    pub fn nextframe(&mut self, header: &VDIFHeader) -> Result<()> {
+        let payload_bytesize = header.payload_bytesize();
+        self.seek_relative(payload_bytesize as i64)?;
+        return Ok(())
+    }
+
+    /// Seek to the next frame by first loading the [`VDIFHeader`] of the current frame.
+    pub fn find_nextframe(&mut self) -> Result<()> {
+        let header = self.header()?;
+        self.nextframe(&header)?;
+        return Ok(())
+    }
+
+    /// Read the currently pointed to [`VDIFHeader`].
+    pub fn header(&mut self) -> Result<VDIFHeader> {
+        let mut buf: [u8; 32] = [0; 32];
         self.read_exact(&mut buf)?;
-        return Ok(VDIFHeader::frombytes(buf))
+
+        // If this was going to panic, I assume it would have in the above read?
+        let (_, header) = parsing::header::parse_header(&buf).unwrap();
+        return Ok(header)
     }
 
-    pub fn get_payload(&mut self, header: &VDIFHeader) -> Result<VDIFPayload> {
+    /// Read the currently pointed to payload. Must be called prior to a successful call to [`header`](VDIFFileReader::header).
+    pub fn payload(&mut self, header: &VDIFHeader) -> Result<VDIFPayload> {
         let mut buf: Box<[u8]> = vec![0; header.payload_bytesize() as usize].into_boxed_slice();
         self.read_exact(&mut buf)?;
-        return VDIFPayload::frombytes(buf, header)
+
+        // If this was going to panic, I assume it would have in the above read?
+        let (_, payload) = parsing::payload::parse_payload(&buf, header).unwrap();
+        return Ok(payload)
     }
 
-    pub fn get_frame(&mut self) -> Result<VDIFFrame> {
-        let header = self.get_header()?;
-        let payload = self.get_payload(&header)?;
+    /// Read the currently pointed to [`VDIFFrame`].
+    pub fn frame(&mut self) -> Result<VDIFFrame> {
+        let header = self.header()?;
+        let payload = self.payload(&header)?;
         return Ok(VDIFFrame::new(header, payload))
     }
-
-    pub fn get_frame_set(&mut self) -> Result<Vec<VDIFFrame>> {
-        let mut cont: bool = true;
-        let mut out: Vec<VDIFFrame> = Vec::new();
-        let mut frame_result = self.get_frame();
-        let time_start: u32;
-
-        // Grab an initial frame to know what time segment we're looking for
-        match frame_result {
-            Ok(frame) => {
-                time_start = frame.get_header().raw_time();
-                out.push(frame);
-            },
-            Err(e) => return Err(e)
-        }
-
-        // As long as we're looking at the same time segment, and we're not at EOF, keep adding
-        // frames to the output
-        while cont {
-            frame_result = self.get_frame();
-            match frame_result {
-                Ok(frame) => {
-                    if frame.get_header().raw_time() != time_start {
-                        cont = false
-                    } else {
-                        out.push(frame);
-                    }
-                },
-                Err(error) => match error.kind() {
-                    ErrorKind::UnexpectedEof => cont = false,
-                    _other => return Err(error)
-                }
-            }
-        }
-        return Ok(out)
-    }
 }
 
-impl<T: Read> std::io::Read for VDIFReader<T> {
+impl Read for VDIFFileReader {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        return self.reader.read(buf)
+        return self.file.read(buf)
     }
 }
 
-impl VDIFReader<BufReader<File>> {
-    pub fn fopen<P: AsRef<Path>>(path: P) -> Result<Self> {
-        return Ok(Self::new(BufReader::new(File::open(path)?)))
-    }
-
-    pub fn fopen_with_capacity<P: AsRef<Path>>(path: P, capacity: usize) -> Result<Self> {
-        return Ok(Self::new(BufReader::with_capacity(capacity, File::open(path)?)))
+impl Seek for VDIFFileReader {
+    fn seek(&mut self, pos: std::io::SeekFrom) -> Result<u64> {
+        return self.file.seek(pos)
     }
 }
+
+// TODO: implement VDIFStreamReader, which is the same as above but accumulates a Vec of VDIFFrames
