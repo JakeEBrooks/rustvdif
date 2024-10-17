@@ -3,6 +3,8 @@ A rust crate for interacting with data encoded in the VLBI Data Interchange Form
 
 This is a minimalist crate designed to relieve the problem of dealing with VDIF data in your own applications.
 
+Documentation is available [here](https://docs.rs/rustvdif/latest/rustvdif/).
+
 ## Contributing
 I'd love to see contributions from the VLBI community, and if you have any suggestions or questions you can always reach out to me directly or open an issue.
 
