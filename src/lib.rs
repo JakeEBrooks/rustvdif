@@ -13,12 +13,14 @@
 //! If you're working with files, you'll want to check out [`VDIFFileReader`](crate::read::VDIFFileReader), which allows
 //! you to read [`VDIFFrame`](crate::frame::VDIFFrame)s from a file like so:
 //! 
-//! ```rust
+//! ```rust,no_run
+//! use rustvdif::VDIFFileReader;
+//! 
 //! fn main() {
 //!     let mut file = VDIFFileReader::open("path/to/my/vdif/file").unwrap();
 //!     // Read the first frame in the file
 //!     let frame0 = file.get_frame().unwrap();
-//!     println!("", frame0);
+//!     println!("{}", frame0);
 //! }
 //! ```
 //! 
@@ -37,3 +39,8 @@ pub mod header;
 pub mod parsing;
 pub mod payload;
 pub mod read;
+
+pub use read::{VDIFFileReader, VDIFReader};
+pub use frame::VDIFFrame;
+pub use payload::VDIFPayload;
+pub use header::VDIFHeader;

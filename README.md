@@ -3,6 +3,14 @@ A rust crate for interacting with data encoded in the VLBI Data Interchange Form
 
 This is a minimalist crate designed to relieve the problem of dealing with VDIF data in your own applications.
 
+With `rustvdif` you can:
+
+- Parse `VDIFFrame`s from simple `&[u8]` byte slices.
+- Easily access fields within a header, using `VDIFHeader`.
+- Encode and decode VDIF payloads, with up to 16 bits/sample.
+- Easily access VDIF files using `VDIFFileReader`.
+- Read VDIF types directly from any type implementing `std::io::Read` using `VDIFReader`.
+
 Documentation is available [here](https://docs.rs/rustvdif/latest/rustvdif/).
 
 ## Contributing
