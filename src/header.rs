@@ -2,7 +2,7 @@
 
 use time::{Date, PrimitiveDateTime, Time};
 
-use crate::parsing::{VDIF_HEADER_BYTESIZE, VDIF_HEADER_SIZE};
+use crate::{encoding::encode_header, parsing::{VDIF_HEADER_BYTESIZE, VDIF_HEADER_SIZE}};
 
 /// Station identifiers can be either a two character ASCII string, or a numeric ID.
 pub enum StationID {
@@ -91,6 +91,11 @@ impl VDIFHeader {
             Ok(idstring) => StationID::StringID(idstring),
             Err(_) => StationID::NumericID(self.station),
         }
+    }
+
+    /// Consume `self` and return a VDIF encoded array of bytes representing a header.
+    pub fn encode(self) -> [u8; 32] {
+        return encode_header(self)
     }
 }
 

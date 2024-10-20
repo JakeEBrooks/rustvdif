@@ -5,6 +5,7 @@ use crate::parsing::{VDIF_HEADER_BYTESIZE, VDIF_HEADER_SIZE};
 use crate::payload::VDIFPayload;
 
 /// A VDIF Data Frame. Consists of a [`VDIFHeader`] and a [`VDIFPayload`].
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VDIFFrame {
     header: VDIFHeader,
     payload: VDIFPayload,
@@ -58,10 +59,66 @@ impl VDIFFrame {
     pub fn unpack(self) -> (VDIFHeader, VDIFPayload) {
         return (self.header, self.payload);
     }
+
+    /// Consume `self` and return a VDIF encoded byte slice representing this [`VDIFFrame`].
+    pub fn encode(self) -> Box<[u8]> {
+        let encoded_header = self.header.encode();
+        let encoded_payload = self.payload.encode();
+
+        let mut out: Box<[u8]> = vec![0; encoded_payload.len()+encoded_header.len()].into_boxed_slice();
+
+        let hdr = &mut out[0..32];
+        hdr.copy_from_slice(&encoded_header);
+        let pld = &mut out[32..];
+        pld.copy_from_slice(&encoded_payload);
+
+        return out
+    }
 }
 
 impl std::fmt::Display for VDIFFrame {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.header)
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::{parsing::parse_frame, VDIFHeader, VDIFPayload};
+
+    use super::VDIFFrame;
+
+    #[test]
+    fn test_frame_encode() {
+        // Make an example frame
+        let example_header = VDIFHeader {
+            is_valid: true,
+            is_legacy: false,
+            time: 100,
+            epoch: 10,
+            frame: 500,
+            version: 3,
+            channels: 16,
+            size: 40,
+            is_real: true,
+            bits_per_sample: 8,
+            thread: 64,
+            station: 50764,
+            edv0: 0,
+            edv1: 0,
+            edv2: 0,
+            edv3: 0,
+        };
+        let example_words: Box<[u32]> = vec![20; 2].into_boxed_slice();
+        let example_payload = VDIFPayload::new(example_words);
+        let example_frame = VDIFFrame::new(example_header, example_payload);
+
+        // Encode the example into an array of bytes
+        let encoded_cpy = example_frame.clone().encode();
+
+        // Then reconstruct a frame by parsing those bytes.
+        let (_, parsed_frame) = parse_frame(&encoded_cpy).unwrap();
+
+        assert_eq!(example_frame, parsed_frame)
     }
 }
