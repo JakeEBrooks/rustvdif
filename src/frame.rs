@@ -1,124 +1,74 @@
-//! Provides functionality related to VDIF data frames.
+//! Implements [`VDIFFrame`].
 
 use crate::header::VDIFHeader;
-use crate::parsing::{VDIF_HEADER_BYTESIZE, VDIF_HEADER_SIZE};
-use crate::payload::VDIFPayload;
+use crate::header_encoding::decode_header;
 
-/// A VDIF Data Frame. Consists of a [`VDIFHeader`] and a [`VDIFPayload`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// A VDIF frame.
+/// 
+/// Each [`VDIFFrame`] simply contains a heap allocated slice of `u32`s. The header is decoded when you call
+/// [`get_header`](VDIFFrame::get_header), so you don't pay a cost for simply creating this type.
+#[derive(Debug)]
 pub struct VDIFFrame {
-    header: VDIFHeader,
-    payload: VDIFPayload,
+    data: Box<[u32]>
 }
 
 impl VDIFFrame {
-    /// Construct a new [`VDIFFrame`] from a [`VDIFHeader`] and a [`VDIFPayload`].
-    pub fn new(header: VDIFHeader, payload: VDIFPayload) -> Self {
-        return Self {
-            header: header,
-            payload: payload,
-        };
+    /// Construct a [`VDIFFrame`] from a raw `u32` slice.
+    pub fn new(data: Box<[u32]>) -> Self {
+        return Self { data: data }
     }
 
-    /// Return the total size of this data frame in 32-bit words, including the header **and** payload.
-    pub fn wordsize(&self) -> usize {
-        return self.payload.wordsize() + VDIF_HEADER_SIZE;
+    /// Construct a [`VDIFFrame`] by copying the contents of `data`.
+    pub fn from_slice(data: &[u32]) -> Self {
+        return Self{ data: Box::from(data) }
     }
 
-    /// Return the total size of this data frame in bytes, including the header **and** payload.
+    /// Get a single `u32` word from this frame.
+    pub fn get_word(&self, ind: usize) -> u32 {
+        return self.data[ind]
+    }
+
+    /// Get a single `u32` word from the payload. Equivalent to `get_word(8 + ind)`.
+    pub fn get_data_word(&self, ind: usize) -> u32 {
+        return self.data[8+ind]
+    }
+
+    /// Construct a [`VDIFHeader`] from this frame.
+    pub fn get_header(&self) -> VDIFHeader {
+        return decode_header(&self)
+    }
+
+    /// Get a reference to the payload portion of this frame.
+    pub fn get_payload(&self) -> &[u32] {
+        return &self.data[8..]
+    }
+
+    /// Get a mutable reference to the payload portion of this frame.
+    pub fn get_payload_mut(&mut self) -> &mut [u32] {
+        return &mut self.data[8..]
+    }
+
+    /// Get the length in `u32` words of this frame.
+    pub fn len(&self) -> usize {
+        return self.data.len()
+    }
+
+    /// Get the size in bytes of this frame.
     pub fn bytesize(&self) -> usize {
-        return self.payload.bytesize() + VDIF_HEADER_BYTESIZE;
+        return self.len()*4
     }
 
-    /// Return the size of the payload in 32-bit words.
-    pub fn payload_wordsize(&self) -> usize {
-        return self.payload.wordsize();
+    /// Return a reference to the underlying `u32` slice, including the header.
+    pub fn as_slice(&self) -> &[u32] {
+        return &self.data
     }
 
-    /// Return the size of the payload in bytes.
-    pub fn payload_bytesize(&self) -> usize {
-        return self.payload.bytesize();
-    }
-
-    /// Returns a reference to the [`VDIFHeader`] owned by this data frame.
-    pub fn get_header(&self) -> &VDIFHeader {
-        return &self.header;
-    }
-
-    /// Returns a reference to the [`VDIFPayload`] owned by this data frame.
-    pub fn get_payload(&self) -> &VDIFPayload {
-        return &self.payload;
-    }
-
-    /// Returns a reference to underlying [`u32`] data of the payload.
-    pub fn get_payload_data(&self) -> &[u32] {
-        return self.payload.get_ref();
-    }
-
-    /// Consume `self` and transfer ownership of its components to the user.
-    pub fn unpack(self) -> (VDIFHeader, VDIFPayload) {
-        return (self.header, self.payload);
-    }
-
-    /// Consume `self` and return a VDIF encoded byte slice representing this [`VDIFFrame`].
-    pub fn encode(self) -> Box<[u8]> {
-        let encoded_header = self.header.encode();
-        let encoded_payload = self.payload.encode();
-
-        let mut out: Box<[u8]> = vec![0; encoded_payload.len()+encoded_header.len()].into_boxed_slice();
-
-        let hdr = &mut out[0..32];
-        hdr.copy_from_slice(&encoded_header);
-        let pld = &mut out[32..];
-        pld.copy_from_slice(&encoded_payload);
-
-        return out
-    }
-}
-
-impl std::fmt::Display for VDIFFrame {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.header)
-    }
-}
-
-#[cfg(test)]
-pub mod tests {
-    use crate::{parsing::parse_frame, VDIFHeader, VDIFPayload};
-
-    use super::VDIFFrame;
-
-    #[test]
-    fn test_frame_encode() {
-        // Make an example frame
-        let example_header = VDIFHeader {
-            is_valid: true,
-            is_legacy: false,
-            time: 100,
-            epoch: 10,
-            frame: 500,
-            version: 3,
-            channels: 16,
-            size: 40,
-            is_real: true,
-            bits_per_sample: 8,
-            thread: 64,
-            station: 50764,
-            edv0: 0,
-            edv1: 0,
-            edv2: 0,
-            edv3: 0,
-        };
-        let example_words: Box<[u32]> = vec![20; 2].into_boxed_slice();
-        let example_payload = VDIFPayload::new(example_words);
-        let example_frame = VDIFFrame::new(example_header, example_payload);
-
-        // Encode the example into an array of bytes
-        let encoded_cpy = example_frame.clone().encode();
-
-        // Then reconstruct a frame by parsing those bytes.
-        let (_, parsed_frame) = parse_frame(&encoded_cpy).unwrap();
-
-        assert_eq!(example_frame, parsed_frame)
+    /// Return a reference to the underlying bytes, including the header.
+    pub fn as_bytes(&self) -> &[u8] {
+        #[cfg(target_endian = "big")]
+        panic!("RustVDIF does not yet support big endian targets.");
+        return unsafe {
+            std::slice::from_raw_parts(self.data.as_ptr() as *const u8, self.data.len()*4)
+        }
     }
 }

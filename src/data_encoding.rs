@@ -1,4 +1,4 @@
-//! Provides functionality for encoding/decoding VDIF headers and payloads.
+//! Provides functionality for encoding/decoding VDIF payloads.
 //!
 //! Up to 16-bit encoding is supported, but let me know on GitHub if you have a use case for larger bits/sample.
 //!
@@ -7,86 +7,10 @@
 //! 
 //! Decoded samples are assumed to be in chronological order, i.e. the most recent sample occupies the largest array index.
 
-use crate::{header::VDIFHeader, parsing::*};
-
-/// Encode a [`VDIFHeader`] into an array of bytes.
-pub fn encode_header(header: VDIFHeader) -> [u8; VDIF_HEADER_BYTESIZE] {
-    let mut w0 = header.time;
-    if header.is_legacy {
-        w0 = w0 | MASK_IS_LEGACY
-    } else {
-        w0 = w0 & (!MASK_IS_LEGACY)
-    }
-    if header.is_valid {
-        w0 = w0 & (!MASK_IS_VALID)
-    } else {
-        w0 = w0 | MASK_IS_VALID
-    }
-
-    let w1 = header.frame | ((header.epoch as u32) << 24);
-    let w2 = header.size / 8 | ((header.channels as u32) << 24) | ((header.version as u32) << 29);
-    let mut w3 = header.station as u32
-        | ((header.thread as u32) << 16)
-        | ((header.bits_per_sample as u32) << 26);
-    if header.is_real {
-        w3 = w3 & (!MASK_IS_REAL)
-    } else {
-        w3 = w3 | MASK_IS_REAL
-    }
-
-    let w4 = header.edv0;
-    let w5 = header.edv1;
-    let w6 = header.edv2;
-    let w7 = header.edv3;
-
-    let mut out: [u8; VDIF_HEADER_BYTESIZE] = [0; VDIF_HEADER_BYTESIZE];
-    let w0bytes = w0.to_le_bytes();
-    let w1bytes = w1.to_le_bytes();
-    let w2bytes = w2.to_le_bytes();
-    let w3bytes = w3.to_le_bytes();
-    let w4bytes = w4.to_le_bytes();
-    let w5bytes = w5.to_le_bytes();
-    let w6bytes = w6.to_le_bytes();
-    let w7bytes = w7.to_le_bytes();
-
-    out[0] = w0bytes[0];
-    out[1] = w0bytes[1];
-    out[2] = w0bytes[2];
-    out[3] = w0bytes[3];
-    out[4] = w1bytes[0];
-    out[5] = w1bytes[1];
-    out[6] = w1bytes[2];
-    out[7] = w1bytes[3];
-    out[8] = w2bytes[0];
-    out[9] = w2bytes[1];
-    out[10] = w2bytes[2];
-    out[11] = w2bytes[3];
-    out[12] = w3bytes[0];
-    out[13] = w3bytes[1];
-    out[14] = w3bytes[2];
-    out[15] = w3bytes[3];
-    out[16] = w4bytes[0];
-    out[17] = w4bytes[1];
-    out[18] = w4bytes[2];
-    out[19] = w4bytes[3];
-    out[20] = w5bytes[0];
-    out[21] = w5bytes[1];
-    out[22] = w5bytes[2];
-    out[23] = w5bytes[3];
-    out[24] = w6bytes[0];
-    out[25] = w6bytes[1];
-    out[26] = w6bytes[2];
-    out[27] = w6bytes[3];
-    out[28] = w7bytes[0];
-    out[29] = w7bytes[1];
-    out[30] = w7bytes[2];
-    out[31] = w7bytes[3];
-    return out;
-}
-
 // Other VDIF software uses a LUT for decoding the u32 word, but
-// writing it out as below seems to be ~2x faster. This is tested
-// for 1 bit decoding, I assume it holds for higher bit depths.
+// writing it out as below seems to be at least the same speed, if not faster.
+// This is tested for 1 bit decoding, I assume it holds for higher bit depths since
+// they require less operations than 1 bit.
 
 // The decoding functions are quite ugly, but writing it out explicitly
 // maximises information to the compiler and doesn't run the risk of
@@ -904,35 +828,6 @@ pub fn encode_16bit_complex(real: u16, imag: u16) -> [u8; 4] {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_encode_header() {
-        let example_header = VDIFHeader {
-            is_valid: true,
-            is_legacy: false,
-            time: 100,
-            epoch: 10,
-            frame: 500,
-            version: 3,
-            channels: 16,
-            size: 8032,
-            is_real: true,
-            bits_per_sample: 4,
-            thread: 64,
-            station: 50764,
-            edv0: 0,
-            edv1: 0,
-            edv2: 0,
-            edv3: 0,
-        };
-
-        // Encode and then decode to make sure it's the same.
-        let cpy = example_header.clone();
-        let encoded = encode_header(cpy);
-        let (_, parsed) = parse_header(&encoded).unwrap();
-
-        assert_eq!(example_header, parsed)
-    }
 
     #[test]
     fn test_decode_1bit_real() {

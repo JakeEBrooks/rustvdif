@@ -1,46 +1,60 @@
 #![warn(missing_docs)]
-//! A Rust library for interacting with data encoded in the VLBI Data Interchange Format (VDIF).
+
+//! A rust crate for interacting with data encoded in the VLBI Data Interchange Format (VDIF), 
+//! commonly used in radio astronomy experiments. The VDIF data format is defined in the VDIF specification, 
+//! found [here](https://vlbi.org/vlbi-standards/vdif/).
 //!
-//! Before using this library, it is recommended you familiarize yourself with the VDIF format, if you haven't already,
-//! by reading the [VDIF Version 1.1.1 specification](https://vlbi.org/vlbi-standards/vdif/). Put simply, VDIF defines
-//! a 'Data Frame': a datagram-like object consisting of a fixed size header and a payload of bytes.
+//! This is a minimalist crate designed to relieve the problem of dealing with VDIF data in your own applications.
 //!
-//! I take some inspiration from the Python [baseband](https://baseband.readthedocs.io/en/stable/vdif/index.html) library
-//! in developing this.
+//! With `rustvdif` you can:
+//!
+//! - Read from and write to various sources, including files and TcpStreams.
+//! - Easily access fields within a VDIF header.
+//! - Encode and decode VDIF payloads, with up to 16 bits/sample.
 //! 
-//! # Getting Started
+//! # Usage
 //! 
-//! If you're working with files, you'll want to check out [`VDIFFileReader`](crate::read::VDIFFileReader), which allows
-//! you to read [`VDIFFrame`](crate::frame::VDIFFrame)s from a file like so:
+//! Reading from VDIF files is quite simple:
+//! ```rust,ignore
+//! fn main() {
+//!     // A file of 8032 byte VDIF frames
+//!     let mut file = VDIFReader::open("path/to/my/vdif", 8032).unwrap();
+//!     // Read the first 100 frames and print header information on each one
+//!     for _ in 0..100 {
+//!         let frame = file.read_frame().unwrap();
+//!         println!("{}", frame.get_header());
+//!     }
+//! }
+//! ```
+//! For writing VDIF frames, see [`VDIFWriter`](crate::io::VDIFWriter).
 //! 
-//! ```rust,no_run
-//! use rustvdif::VDIFFileReader;
+//! A [`VDIFReader`](crate::io::VDIFReader) accepts any type implementing [`Read`](std::io::Read), so the pattern is
+//! fairly similar even for other data sources. For example a [`TcpStream`](std::net::TcpStream) can be used
+//! instead of a [`File`](std::fs::File):
+//! ```rust,ignore
+//! use std::net::TcpStream;
 //! 
 //! fn main() {
-//!     let mut file = VDIFFileReader::open("path/to/my/vdif/file").unwrap();
-//!     // Read the first frame in the file
-//!     let frame0 = file.get_frame().unwrap();
-//!     println!("{}", frame0);
+//!     // Connect to a TCP stream of VDIF frames
+//!     let stream = TcpStream::connect("127.0.0.1:34254").unwrap();
+//!     // VDIFReader is buffered by default, so use a buffer of 100 frames.
+//!     let mut reader = VDIFReader::with_capacity(stream, 8032, 100);
+//!     // Read the first 100 frames and print header information on each one
+//!     for _ in 0..100 {
+//!         let frame = reader.read_frame().unwrap();
+//!         println!("{}", frame.get_header());
+//!     }
 //! }
 //! ```
 //! 
-//! You can then read the next frame by calling [`get_frame`](crate::read::VDIFFileReader::get_frame) again, or skip the next
-//! frame by calling [`nextframe`](crate::read::VDIFFileReader::nextframe). If you want to read all frames from the file
-//! (be careful with big files!), you can call [`get_all_frames`](crate::read::VDIFFileReader::get_all_frames).
-//! 
-//! If your working with VDIF data from other sources you'll be using the more general [`VDIFReader`](crate::read::VDIFReader)
-//! type, which allows you to wrap any type implementing [`std::io::Read`].
-//! 
-//! For decoding the payload, check out the [`encoding`] module.
+//! This crate was designed with performance in mind, as is often needed when dealing with high data rate
+//! VDIF streams. As such, a minimal amount of memory allocations/copies are performed. Buffered IO is the default for 
+//! [`VDIFReader`](crate::io::VDIFReader)s, to minimise expensive system calls.
 
-pub mod encoding;
 pub mod frame;
 pub mod header;
-pub mod parsing;
-pub mod payload;
-pub mod read;
+pub mod data_encoding;
+pub mod header_encoding;
+pub mod io;
 
-pub use read::{VDIFFileReader, VDIFReader};
 pub use frame::VDIFFrame;
-pub use payload::VDIFPayload;
-pub use header::VDIFHeader;

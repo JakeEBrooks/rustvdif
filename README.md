@@ -5,11 +5,9 @@ This is a minimalist crate designed to relieve the problem of dealing with VDIF 
 
 With `rustvdif` you can:
 
-- Parse `VDIFFrame`s from simple `&[u8]` byte slices.
-- Easily access fields within a header, using `VDIFHeader`.
+- Read from and write to various sources, including files and TcpStreams.
+- Easily access fields within a VDIF header.
 - Encode and decode VDIF payloads, with up to 16 bits/sample.
-- Easily access VDIF files using `VDIFFileReader`.
-- Read VDIF types directly from any type implementing `std::io::Read` using `VDIFReader`.
 
 Documentation is available [here](https://docs.rs/rustvdif/latest/rustvdif/).
 
