@@ -50,11 +50,15 @@
 //! This crate was designed with performance in mind, as is often needed when dealing with high data rate
 //! VDIF streams. As such, a minimal amount of memory allocations/copies are performed. Buffered IO is the default for 
 //! [`VDIFReader`](crate::io::VDIFReader)s, to minimise expensive system calls.
+//! 
+//! In general, this library uses byte sizes for the frame size, and assumes you know the size of the incoming/outgoing VDIF
+//! frames in advance.
 
 pub mod frame;
 pub mod header;
 pub mod data_encoding;
 pub mod header_encoding;
 pub mod io;
+pub mod udp;
 
 pub use frame::VDIFFrame;

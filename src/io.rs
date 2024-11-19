@@ -78,16 +78,9 @@ impl<T: Read> VDIFRead for VDIFReader<T> {
         #[cfg(target_endian = "big")]
         panic!("RustVDIF does not yet support big endian targets.");
 
-        // Allocate the frame's memory
-        let mut outframe: Box<[u32]> = vec![0; self.frame_size/4].into_boxed_slice();
-
-        // Unsafely copy bytes into the u32 slice. Alignment isn't an issue because we allocated u32s.
-        // May not work on big endian systems (but who uses those, right?). Doing it this way saves an excessive
-        // amount of copies.
-        let bytes_read: usize;
-        unsafe {
-            bytes_read = self.inner.read(std::slice::from_raw_parts_mut(outframe.as_mut_ptr() as *mut u8, self.frame_size))?;
-        }
+        // Allocate a frame and read bytes into it
+        let mut outframe = VDIFFrame::empty(self.frame_size);
+        let bytes_read = self.inner.read(outframe.as_bytes_mut())?;
 
         if bytes_read == 0 {
             return Err(Error::new(ErrorKind::UnexpectedEof, "Reached EOF"))
@@ -95,7 +88,7 @@ impl<T: Read> VDIFRead for VDIFReader<T> {
             return Err(Error::new(ErrorKind::InvalidData, "Did not read a complete VDIF frame"))
         }
 
-        return Ok(VDIFFrame::new(outframe));
+        return Ok(outframe);
     }
 }
 
@@ -143,7 +136,7 @@ impl<T: Write> VDIFWriter<T> {
 
 impl<T: Write> VDIFWrite for VDIFWriter<T> {
     fn write_frame(&mut self, frame: VDIFFrame) -> Result<()> {
-        assert_eq!(self.frame_size, frame.bytesize(), "Frames must be {} bytes in size for this VDIFWriter", self.frame_size);
+        assert_eq!(self.frame_size, frame.bytesize(), "VDIF frames must be {} bytes in size for this VDIFWriter", self.frame_size);
         let _ = self.inner.write(frame.as_bytes())?;
         return Ok(())
     }

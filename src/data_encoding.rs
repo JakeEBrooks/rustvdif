@@ -1,6 +1,8 @@
 //! Provides functionality for encoding/decoding VDIF payloads.
 //!
-//! Up to 16-bit encoding is supported, but let me know on GitHub if you have a use case for larger bits/sample.
+//! Up to 16-bit encoding is supported, but let me know on GitHub if you have a use case for larger bits/sample. Note
+//! that these functions *may* not be the most performant way of doing what you need, but are provided for
+//! convenience, or for when you just want to inspect a VDIF frame's payload.
 //!
 //! While this crate supports uncommon bits per sample like 6 bit, you should try to stick to 2^n bits per sample
 //! (i.e. 1, 2, 4, 8, 16, 32) since they are more efficient to store in VDIF.
