@@ -35,6 +35,10 @@ fn main() {
 
 I'd love to see contributions from the VLBI community, and if you have any suggestions or questions you can always reach out to me directly or open an issue.
 
+## Known Issues
+
+Since VDIF is an explicitly little-endian format, supporting big-endian systems takes a bit of extra effort. So big-endian systems aren't currently supported, but I could probably be persuaded to implement support if someone needs it.
+
 ## Licensing
 
 This library is licensed under either the MIT License or the Apache 2.0 License at your option.

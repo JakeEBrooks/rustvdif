@@ -2,16 +2,28 @@
 
 /// Station identifiers can be either a two character ASCII string, or a numeric ID.
 pub enum StationID {
-    /// The station ID as a string
+    /// The station ID as a two character ASCII string
     StringID(String),
     /// The station ID as a number
     NumericID(u16),
 }
 
+impl StationID {
+    /// Encode this station ID into a `u16` VDIF header field.
+    pub fn encode(self) -> u16 {
+        match self {
+            Self::StringID(s) => u16::from_be_bytes(s.as_bytes().try_into().expect("Tried to encode a StationID with more/less than two ASCII characters!")),
+            Self::NumericID(id) => {
+                id
+            }
+        }
+    }
+}
+
 /// A VDIF data frame header.
 ///
 /// The header information is accessed through public fields and methods.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct VDIFHeader {
     /// Whether the frame is valid.
     pub is_valid: bool,
@@ -25,9 +37,9 @@ pub struct VDIFHeader {
     pub frameno: u32,
     /// The VDIF version.
     pub version: u8,
-    /// The number of channels within the frame.
+    /// The number of channels within the frame stored as 2<sup># Channels</sup>.
     pub channels: u8,
-    /// The size in bytes of the data frame (header **and** payload).
+    /// The size in units of 8 bytes of the data frame (header **and** payload).
     pub size: u32,
     /// Whether the encoded data is real or complex.
     pub is_real: bool,
@@ -51,22 +63,27 @@ pub struct VDIFHeader {
 impl VDIFHeader {
     /// Get the total size in bytes of the associated VDIF frame.
     pub fn bytesize(&self) -> u32 {
-        return self.size
+        return self.size*8
     }
 
     /// Get the total size in 32-bit words of the associated VDIF frame.
     pub fn wordsize(&self) -> u32 {
-        return self.size/4
+        return self.bytesize()/4
     }
 
     /// Get the total size in bytes of the associated VDIF payload.
     pub fn data_bytesize(&self) -> u32 {
-        return self.size - 32
+        return self.bytesize() - 32
     }
 
     /// Get the total size in 32-bit words of the associated VDIF payload.
     pub fn data_wordsize(&self) -> u32 {
-        return (self.size - 32)/4
+        return (self.bytesize() - 32)/4
+    }
+
+    /// Get the number of channels contained within the associated VDIF payload.
+    pub fn channelno(&self) -> usize {
+        return 1usize << self.channels
     }
 
     /// Return the station ID as either a string or a number.
@@ -93,5 +110,19 @@ impl std::fmt::Display for VDIFHeader {
 
         write!(f, "(Frame: {}, Thread: {}, Time: {}, Size: {}, Channels: {}, Bits/sample: (1){}, Real: {}, Valid: {}, Station: {} ({}))",
         self.frameno, self.thread, self.time, self.size, self.channels, self.bits_per_sample, self.is_real, self.is_valid, station, self.station)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::StationID;
+
+    #[test]
+    fn test_stationid_encode() {
+        let testid = StationID::NumericID(12345);
+        assert_eq!(testid.encode(), 12345);
+
+        let teststr = StationID::StringID("JB".to_owned());
+        assert_eq!(teststr.encode(), 0b0100101001000010)
     }
 }

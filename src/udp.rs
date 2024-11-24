@@ -1,23 +1,24 @@
-//! A simple implementation of VDIF over UDP.
+//! Types and methods to assist in sending and receiving VDIF frames using UDP.
 //! 
-//! Doesn't perform any buffering or packet reordering, so frames may not be read in order.
-//! Assumes that a single, complete VDIF frame is fully contained within a single datagram.
+//! This implementation assumes that one datagram consists of a single, complete VDIF frame.
 
 use std::io::Result;
-use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
+use std::net::{ToSocketAddrs, UdpSocket};
 
-use crate::io::{VDIFRead, VDIFWrite};
 use crate::VDIFFrame;
+use crate::header_encoding::MASK_FRAME_NO;
 
-/// The type for reading VDIF frames from a UDP socket.
+/// A simple wrapper around a [`UdpSocket`] to [`recv`](std::net::UdpSocket::recv) frames.
+/// 
+/// Does not perform any logic or buffering, so all the normal rules and expectations around UDP apply.
 pub struct VDIFUDP {
-    /// The inner [`UdpSocket`]
+    /// The underlying [`UdpSocket`].
     pub sock: UdpSocket,
     frame_size: usize
 }
 
 impl VDIFUDP {
-    /// Construct a new [`VDIFUDP`] type attached to a specific [`SocketAddr`].
+    /// Construct a new [`VDIFUDP`] type attached to a specific socket.
     pub fn new<A: ToSocketAddrs>(addr: A, frame_size: usize) -> Result<Self> {
         let sock = UdpSocket::bind(addr)?;
         return Ok(Self { sock: sock, frame_size: frame_size })
@@ -26,38 +27,79 @@ impl VDIFUDP {
     /// [`recv`](std::net::UdpSocket::recv) a [`VDIFFrame`].
     pub fn recv_frame(&mut self) -> Result<VDIFFrame> {
         let mut frame = VDIFFrame::empty(self.frame_size);
-        self.sock.recv(frame.as_bytes_mut())?;
+        self.sock.recv(frame.as_mut_bytes())?;
         return Ok(frame)
     }
 
-    /// [`recv_from`](std::net::UdpSocket::recv_from) a [`VDIFFrame`], additionally returning the source address. 
-    pub fn recv_frame_from(&mut self) -> Result<(VDIFFrame, SocketAddr)> {
-        let mut frame = VDIFFrame::empty(self.frame_size);
-        let (_, src) = self.sock.recv_from(frame.as_bytes_mut())?;
-        return Ok((frame, src))
-    }
-
-    /// [`send`](std::net::UdpSocket::send) a [`VDIFFrame`] to the attached address.
-    pub fn send_frame(&self, frame: VDIFFrame) -> Result<()> {
+    /// [`send`](std::net::UdpSocket::send) a [`VDIFFrame`].
+    pub fn send_frame(&mut self, frame: VDIFFrame) -> Result<()> {
         let _ = self.sock.send(frame.as_bytes())?;
         return Ok(())
     }
+}
 
-    /// [`send_to`](std::net::UdpSocket::send_to) a [`VDIFFrame`] to the *specified* address.
-    pub fn send_frame_to<A: ToSocketAddrs>(&self, addr: A, frame: VDIFFrame) -> Result<()> {
-        let _ = self.sock.send_to(frame.as_bytes(), addr)?;
-        return Ok(())
+/// Allows reading VDIF frames in order.
+/// 
+/// More specifically, [`VDIFOrderedUDP`] implements a simple sequence counting algorithm to ensure that the frame
+/// returned by [`next_frame`](VDIFOrderedUDP::next_frame) does not precede the frame previously fetched by the
+/// same function.
+/// 
+/// For example, say the user has received frame `i` from a call to [`next_frame`](VDIFOrderedUDP::next_frame).
+/// Upon calling [`next_frame`](VDIFOrderedUDP::next_frame) again, the value returned is guaranteed to be one of 
+/// the following:
+/// 
+/// - The `i + 1` th frame (most likely).
+/// - The `i + n` th frame, where `n` is any *positive* integer.
+/// - A duplicate of the `i`th frame.
+/// - `None`
+/// 
+/// Frames received out of order are simply discarded.
+pub struct VDIFOrderedUDP {
+    vdifudp: VDIFUDP,
+
+    max_frame_no: u32,
+    expecting_frame: u32
+}
+
+impl VDIFOrderedUDP {
+    /// Construct a new [`VDIFOrderedUDP`] type.
+    pub fn new<A: ToSocketAddrs>(addr: A, frame_size: usize, max_frame_no: u32) -> Result<Self> {
+        let vdifudp = VDIFUDP::new(addr, frame_size)?;
+        return Ok(Self { vdifudp: vdifudp, max_frame_no: max_frame_no, expecting_frame: 0 })
+    }
+
+    /// Return the next frame in the stream, or `None` if the frame would be out of order.
+    pub fn next_frame(&mut self) -> Result<Option<VDIFFrame>> {
+        let in_frame = self.vdifudp.recv_frame()?;
+        let in_frame_no = check_frame_no(&in_frame);
+        if self.expecting_frame <= in_frame_no {
+            // Frame is good, increment the expected frame appropriately and
+            // return the frame
+            self.expecting_frame = if self.expecting_frame < self.max_frame_no {
+                in_frame_no + 1
+            } else {
+                0
+            };
+            return Ok(Some(in_frame))
+        } else {
+            // Frame is not in order, so just discard it after setting the counter properly.
+            self.expecting_frame = if self.expecting_frame < self.max_frame_no {
+                in_frame_no + 1
+            } else {
+                0
+            };
+
+            return Ok(None)
+        }
+    }
+
+    /// Get a reference to the underlying [`UdpSocket`].
+    pub fn socket_ref(&self) -> &UdpSocket {
+        return &self.vdifudp.sock
     }
 }
 
-impl VDIFRead for VDIFUDP {
-    fn read_frame(&mut self) -> Result<VDIFFrame> {
-        return self.recv_frame()
-    }
-}
-
-impl VDIFWrite for VDIFUDP {
-    fn write_frame(&mut self, frame: VDIFFrame) -> Result<()> {
-        return self.send_frame(frame)
-    }
+/// Quickly check the frame number without decoding the whole header
+fn check_frame_no(frame: &VDIFFrame) -> u32 {
+    return frame.get_word(1) & MASK_FRAME_NO
 }

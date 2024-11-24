@@ -17,15 +17,20 @@ pub(crate) const MASK_THREAD_ID: u32 = 0b00000011111111110000000000000000;
 pub(crate) const MASK_STATION_ID: u32 = 0b00000000000000001111111111111111;
 
 /// Construct a [`VDIFHeader`] from a [`VDIFFrame`].
-pub fn decode_header(frame: &VDIFFrame) -> VDIFHeader {
-    let (is_valid, is_legacy, time) = decode_w0(frame.get_word(0));
-    let (epoch, frameno) = decode_w1(frame.get_word(1));
-    let (version, channels, size) = decode_w2(frame.get_word(2));
-    let (is_real, bits_per_sample, thread, station) = decode_w3(frame.get_word(3));
-    let edv0 = frame.get_word(4);
-    let edv1 = frame.get_word(5);
-    let edv2 = frame.get_word(6);
-    let edv3 = frame.get_word(7);
+pub fn decode_frame_header(frame: &VDIFFrame) -> VDIFHeader {
+    return decode_header(frame.as_slice()[0..8].try_into().unwrap())
+}
+
+/// Construct a [`VDIFHeader`] from a series of eight `u32`s.
+pub fn decode_header(words: [u32; 8]) -> VDIFHeader {
+    let (is_valid, is_legacy, time) = decode_w0(words[0]);
+    let (epoch, frameno) = decode_w1(words[1]);
+    let (version, channels, size) = decode_w2(words[2]);
+    let (is_real, bits_per_sample, thread, station) = decode_w3(words[3]);
+    let edv0 = words[4];
+    let edv1 = words[5];
+    let edv2 = words[6];
+    let edv3 = words[7];
 
     return VDIFHeader {
         is_valid: is_valid,
@@ -66,7 +71,7 @@ pub(crate) fn decode_w1(word: u32) -> (u8, u32) {
 pub(crate) fn decode_w2(word: u32) -> (u8, u8, u32) {
     let version = ((word & MASK_VERSION_NO) >> 29) as u8;
     let channels = ((word & MASK_LOG2_CHANNELS) >> 24) as u8;
-    let size = (word & MASK_BYTE_SIZE) * 8;
+    let size = word & MASK_BYTE_SIZE;
     return (version, channels, size);
 }
 
@@ -79,7 +84,7 @@ pub(crate) fn decode_w3(word: u32) -> (bool, u8, u16, u16) {
     return (is_real, bits_per_sample, thread, station);
 }
 
-/// Encode a [`VDIFHeader`] into an array of `u32`s.
+/// Encode a [`VDIFHeader`] into an array of eight `u32`s.
 pub fn encode_header(header: VDIFHeader) -> [u32; 8] {
     let mut w0 = header.time;
     if header.is_legacy {
@@ -94,7 +99,7 @@ pub fn encode_header(header: VDIFHeader) -> [u32; 8] {
     }
 
     let w1 = header.frameno | ((header.epoch as u32) << 24);
-    let w2 = header.size / 8 | ((header.channels as u32) << 24) | ((header.version as u32) << 29);
+    let w2 = header.size | ((header.channels as u32) << 24) | ((header.version as u32) << 29);
     let mut w3 = header.station as u32
         | ((header.thread as u32) << 16)
         | ((header.bits_per_sample as u32) << 26);
@@ -110,4 +115,36 @@ pub fn encode_header(header: VDIFHeader) -> [u32; 8] {
     let w7 = header.edv3;
 
     return [w0, w1, w2, w3, w4, w5, w6, w7]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::header::*;
+
+    #[test]
+    fn test_header_encoding() {
+        let test_header = VDIFHeader {
+            is_valid: true,
+            is_legacy: false,
+            time: 40,
+            epoch: 2,
+            frameno: 1072,
+            version: 0,
+            channels: 2,
+            size: 8032,
+            is_real: true,
+            bits_per_sample: 4,
+            thread: 0,
+            station: 124,
+
+            edv0: 0,
+            edv1: 0,
+            edv2: 0,
+            edv3: 0
+        };
+
+        let cpy = test_header;
+        assert_eq!(cpy, decode_header(encode_header(test_header)))
+    }
 }

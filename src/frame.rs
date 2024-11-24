@@ -1,7 +1,7 @@
 //! Implements [`VDIFFrame`].
 
 use crate::header::VDIFHeader;
-use crate::header_encoding::decode_header;
+use crate::header_encoding::decode_frame_header;
 
 /// A VDIF frame.
 /// 
@@ -15,17 +15,19 @@ pub struct VDIFFrame {
 impl VDIFFrame {
     /// Construct a [`VDIFFrame`] from a raw `u32` slice.
     pub fn new(data: Box<[u32]>) -> Self {
+        assert!(data.len() % 2 == 0, "VDIF frames must be a multiple of 8 bytes in size.");
         return Self { data: data }
     }
 
     /// Construct a [`VDIFFrame`] by copying the contents of `data`.
     pub fn from_slice(data: &[u32]) -> Self {
+        assert!(data.len() % 2 == 0, "VDIF frames must be a multiple of 8 bytes in size.");
         return Self{ data: Box::from(data) }
     }
 
     /// Construct a completely empty [`VDIFFrame`].
     pub fn empty(frame_size: usize) -> Self {
-        assert!(frame_size % 4 == 0, "VDIF frames must contain an integer number of 32 bit words");
+        assert!(frame_size % 8 == 0, "VDIF frames must be a multiple of 8 bytes in size.");
         return Self { data: vec![0; frame_size/4].into_boxed_slice() }
     }
 
@@ -41,7 +43,7 @@ impl VDIFFrame {
 
     /// Construct a [`VDIFHeader`] from this frame.
     pub fn get_header(&self) -> VDIFHeader {
-        return decode_header(&self)
+        return decode_frame_header(&self)
     }
 
     /// Get a reference to the payload portion of this frame.
@@ -50,7 +52,7 @@ impl VDIFFrame {
     }
 
     /// Get a mutable reference to the payload portion of this frame.
-    pub fn get_payload_mut(&mut self) -> &mut [u32] {
+    pub fn get_mut_payload(&mut self) -> &mut [u32] {
         return &mut self.data[8..]
     }
 
@@ -70,7 +72,7 @@ impl VDIFFrame {
     }
 
     /// Return a mutable reference to the underlying `u32` slice, including the header.
-    pub fn as_slice_mut(&mut self) -> &mut [u32] {
+    pub fn as_mut_slice(&mut self) -> &mut [u32] {
         return &mut self.data
     }
 
@@ -84,7 +86,7 @@ impl VDIFFrame {
     }
 
     /// Return a mutable reference to the underlying bytes, including the header.
-    pub fn as_bytes_mut(&mut self) -> &mut [u8] {
+    pub fn as_mut_bytes(&mut self) -> &mut [u8] {
         #[cfg(target_endian = "big")]
         panic!("RustVDIF does not yet support big endian targets.");
         return unsafe {

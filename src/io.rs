@@ -80,7 +80,7 @@ impl<T: Read> VDIFRead for VDIFReader<T> {
 
         // Allocate a frame and read bytes into it
         let mut outframe = VDIFFrame::empty(self.frame_size);
-        let bytes_read = self.inner.read(outframe.as_bytes_mut())?;
+        let bytes_read = self.inner.read(outframe.as_mut_bytes())?;
 
         if bytes_read == 0 {
             return Err(Error::new(ErrorKind::UnexpectedEof, "Reached EOF"))
