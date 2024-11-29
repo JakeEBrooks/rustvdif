@@ -108,8 +108,8 @@ impl std::fmt::Display for VDIFHeader {
             station = str
         }
 
-        write!(f, "(Frame: {}, Thread: {}, Time: {}, Size: {}, Channels: {}, Bits/sample: (1){}, Real: {}, Valid: {}, Station: {} ({}))",
-        self.frameno, self.thread, self.time, self.size, self.channels, self.bits_per_sample, self.is_real, self.is_valid, station, self.station)
+        write!(f, "(Frame: {}, Thread: {}, Time: {}, Size: {}, Channels: {}, Bits/sample: {}, Real: {}, Valid: {}, Station: {} ({}))",
+        self.frameno, self.thread, self.time, self.size*8, 1 << self.channels, self.bits_per_sample, self.is_real, self.is_valid, station, self.station)
     }
 }
 

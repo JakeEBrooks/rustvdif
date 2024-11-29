@@ -59,6 +59,14 @@ pub mod data_encoding;
 pub mod header_encoding;
 pub mod io;
 pub mod udp;
-pub mod generator;
+pub mod sim;
+pub mod vtp;
 
 pub use frame::VDIFFrame;
+
+// VDIF is an explicitly little endian format. This makes in finnicky on big endian targets. A lot of the unsafe
+// operations rely on being run on a little endian target and are faster as a result. If a user needs big-endian
+// compatibility it is possible, just let me know.
+
+#[cfg(target_endian = "big")]
+compile_error!("RustVDIF does not currently support big-endian targets");

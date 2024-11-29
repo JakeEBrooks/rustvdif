@@ -78,8 +78,6 @@ impl VDIFFrame {
 
     /// Return a reference to the underlying bytes, including the header.
     pub fn as_bytes(&self) -> &[u8] {
-        #[cfg(target_endian = "big")]
-        panic!("RustVDIF does not yet support big endian targets.");
         return unsafe {
             std::slice::from_raw_parts(self.data.as_ptr() as *const u8, self.data.len()*4)
         }
@@ -87,8 +85,6 @@ impl VDIFFrame {
 
     /// Return a mutable reference to the underlying bytes, including the header.
     pub fn as_mut_bytes(&mut self) -> &mut [u8] {
-        #[cfg(target_endian = "big")]
-        panic!("RustVDIF does not yet support big endian targets.");
         return unsafe {
             std::slice::from_raw_parts_mut(self.data.as_mut_ptr() as *mut u8, self.data.len()*4)
         }

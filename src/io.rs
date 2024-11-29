@@ -75,9 +75,6 @@ impl<T: Read> VDIFReader<T> {
 
 impl<T: Read> VDIFRead for VDIFReader<T> {
     fn read_frame(&mut self) -> Result<VDIFFrame> {
-        #[cfg(target_endian = "big")]
-        panic!("RustVDIF does not yet support big endian targets.");
-
         // Allocate a frame and read bytes into it
         let mut outframe = VDIFFrame::empty(self.frame_size);
         let bytes_read = self.inner.read(outframe.as_mut_bytes())?;
