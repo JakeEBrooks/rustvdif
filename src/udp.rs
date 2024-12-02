@@ -57,15 +57,15 @@ impl VDIFUDP {
 pub struct VDIFOrderedUDP {
     vdifudp: VDIFUDP,
 
-    max_frame_no: u32,
+    frame_rate: u32,
     expecting_frame: u32
 }
 
 impl VDIFOrderedUDP {
-    /// Construct a new [`VDIFOrderedUDP`] type.
-    pub fn new<A: ToSocketAddrs>(addr: A, frame_size: usize, max_frame_no: u32) -> Result<Self> {
+    /// Construct a new [`VDIFOrderedUDP`] type. Note `frame_rate` is the the number of frames contained within one second *per* thread.
+    pub fn new<A: ToSocketAddrs>(addr: A, frame_size: usize, frame_rate: u32) -> Result<Self> {
         let vdifudp = VDIFUDP::new(addr, frame_size)?;
-        return Ok(Self { vdifudp: vdifudp, max_frame_no: max_frame_no, expecting_frame: 0 })
+        return Ok(Self { vdifudp: vdifudp, frame_rate: frame_rate, expecting_frame: 0 })
     }
 
     /// Return the next frame in the stream, or `None` if the frame would be out of order.
@@ -75,7 +75,7 @@ impl VDIFOrderedUDP {
         if self.expecting_frame <= in_frame_no {
             // Frame is good, increment the expected frame appropriately and
             // return the frame
-            self.expecting_frame = if self.expecting_frame < self.max_frame_no {
+            self.expecting_frame = if self.expecting_frame < self.frame_rate {
                 in_frame_no + 1
             } else {
                 0
@@ -83,7 +83,7 @@ impl VDIFOrderedUDP {
             return Ok(Some(in_frame))
         } else {
             // Frame is not in order, so just discard it after setting the counter properly.
-            self.expecting_frame = if self.expecting_frame < self.max_frame_no {
+            self.expecting_frame = if self.expecting_frame < self.frame_rate {
                 in_frame_no + 1
             } else {
                 0
