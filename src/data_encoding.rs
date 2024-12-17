@@ -3,10 +3,10 @@
 //! Note that these functions *may* not be the most performant way of doing what you need, but are provided for
 //! convenience, or for when you just want to inspect a VDIF frame's payload.
 //!
-//! Up to 16-bit encoding is supported, but let me know on GitHub if you have a use case for larger bits/sample. 
+//! Up to 16-bit encoding is supported, but let me know on GitHub if you have a use case for larger bits/sample.
 //! While this crate supports uncommon bits per sample like 6 bit, you should try to stick to 2^n bits per sample
 //! (i.e. 1, 2, 4, 8, 16, 32) since they are more efficient to store in VDIF.
-//! 
+//!
 //! Decoded samples are in chronological order, i.e. the most recent sample occupies the largest array index.
 
 // Other VDIF software uses a LUT for decoding the u32 word, but
@@ -475,7 +475,7 @@ pub fn encode_1bit_real(input: [u8; 32]) -> [u8; 4] {
     word |= ((input[30] & EC_MASK_1BIT) as u32) << 30;
     word |= ((input[31] & EC_MASK_1BIT) as u32) << 31;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 16 1-bit complex samples into an array of bytes.
@@ -515,7 +515,7 @@ pub fn encode_1bit_complex(real: [u8; 16], imag: [u8; 16]) -> [u8; 4] {
     word |= ((real[15] & EC_MASK_1BIT) as u32) << 30;
     word |= ((imag[15] & EC_MASK_1BIT) as u32) << 31;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 16 2-bit real samples into an array of bytes.
@@ -539,7 +539,7 @@ pub fn encode_2bit_real(input: [u8; 16]) -> [u8; 4] {
     word |= ((input[14] & EC_MASK_2BIT) as u32) << 28;
     word |= ((input[15] & EC_MASK_2BIT) as u32) << 30;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 8 2-bit complex samples into an array of bytes.
@@ -563,7 +563,7 @@ pub fn encode_2bit_complex(real: [u8; 8], imag: [u8; 8]) -> [u8; 4] {
     word |= ((real[7] & EC_MASK_2BIT) as u32) << 28;
     word |= ((imag[7] & EC_MASK_2BIT) as u32) << 30;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 10 3-bit real samples into an array of bytes.
@@ -581,7 +581,7 @@ pub fn encode_3bit_real(input: [u8; 10]) -> [u8; 4] {
     word |= ((input[8] & EC_MASK_3BIT) as u32) << 24;
     word |= ((input[9] & EC_MASK_3BIT) as u32) << 27;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 5 3-bit complex samples into an array of bytes.
@@ -599,7 +599,7 @@ pub fn encode_3bit_complex(real: [u8; 5], imag: [u8; 5]) -> [u8; 4] {
     word |= ((real[4] & EC_MASK_3BIT) as u32) << 24;
     word |= ((imag[4] & EC_MASK_3BIT) as u32) << 27;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 8 4-bit real samples into an array of bytes.
@@ -615,7 +615,7 @@ pub fn encode_4bit_real(input: [u8; 8]) -> [u8; 4] {
     word |= ((input[6] & EC_MASK_4BIT) as u32) << 24;
     word |= ((input[7] & EC_MASK_4BIT) as u32) << 28;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 4 4-bit complex samples into an array of bytes.
@@ -631,7 +631,7 @@ pub fn encode_4bit_complex(real: [u8; 4], imag: [u8; 4]) -> [u8; 4] {
     word |= ((real[3] & EC_MASK_4BIT) as u32) << 24;
     word |= ((imag[3] & EC_MASK_4BIT) as u32) << 28;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 5 6-bit real samples into an array of bytes.
@@ -644,7 +644,7 @@ pub fn encode_6bit_real(input: [u8; 5]) -> [u8; 4] {
     word |= ((input[3] & EC_MASK_6BIT) as u32) << 18;
     word |= ((input[4] & EC_MASK_6BIT) as u32) << 24;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 2 6-bit complex samples into an array of bytes.
@@ -656,7 +656,7 @@ pub fn encode_6bit_complex(real: [u8; 2], imag: [u8; 2]) -> [u8; 4] {
     word |= ((real[1] & EC_MASK_6BIT) as u32) << 12;
     word |= ((imag[1] & EC_MASK_6BIT) as u32) << 18;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 4 7-bit real samples into an array of bytes.
@@ -668,7 +668,7 @@ pub fn encode_7bit_real(input: [u8; 4]) -> [u8; 4] {
     word |= ((input[2] & EC_MASK_7BIT) as u32) << 14;
     word |= ((input[3] & EC_MASK_7BIT) as u32) << 21;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 2 7-bit complex samples into an array of bytes.
@@ -680,7 +680,7 @@ pub fn encode_7bit_complex(real: [u8; 2], imag: [u8; 2]) -> [u8; 4] {
     word |= ((real[1] & EC_MASK_7BIT) as u32) << 14;
     word |= ((imag[1] & EC_MASK_7BIT) as u32) << 21;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 4 8-bit real samples into an array of bytes.
@@ -692,7 +692,7 @@ pub fn encode_8bit_real(input: [u8; 4]) -> [u8; 4] {
     word |= (input[2] as u32) << 16;
     word |= (input[3] as u32) << 24;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 2 8-bit complex samples into an array of bytes.
@@ -704,7 +704,7 @@ pub fn encode_8bit_complex(real: [u8; 2], imag: [u8; 2]) -> [u8; 4] {
     word |= (real[1] as u32) << 16;
     word |= (imag[1] as u32) << 24;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 2 11-bit real samples into an array of bytes.
@@ -714,7 +714,7 @@ pub fn encode_11bit_real(input: [u16; 2]) -> [u8; 4] {
     word |= (input[0] & EC_MASK_11BIT) as u32;
     word |= ((input[1] & EC_MASK_11BIT) as u32) << 11;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode an 11-bit complex sample into an array of bytes.
@@ -724,7 +724,7 @@ pub fn encode_11bit_complex(real: u16, imag: u16) -> [u8; 4] {
     word |= (real & EC_MASK_11BIT) as u32;
     word |= ((imag & EC_MASK_11BIT) as u32) << 11;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 2 12-bit real samples into an array of bytes.
@@ -734,7 +734,7 @@ pub fn encode_12bit_real(input: [u16; 2]) -> [u8; 4] {
     word |= (input[0] & EC_MASK_12BIT) as u32;
     word |= ((input[1] & EC_MASK_12BIT) as u32) << 12;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode a 12-bit complex sample into an array of bytes.
@@ -744,7 +744,7 @@ pub fn encode_12bit_complex(real: u16, imag: u16) -> [u8; 4] {
     word |= (real & EC_MASK_12BIT) as u32;
     word |= ((imag & EC_MASK_12BIT) as u32) << 12;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 2 13-bit real samples into an array of bytes.
@@ -754,7 +754,7 @@ pub fn encode_13bit_real(input: [u16; 2]) -> [u8; 4] {
     word |= (input[0] & EC_MASK_13BIT) as u32;
     word |= ((input[1] & EC_MASK_13BIT) as u32) << 13;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode a 13-bit complex sample into an array of bytes.
@@ -764,7 +764,7 @@ pub fn encode_13bit_complex(real: u16, imag: u16) -> [u8; 4] {
     word |= (real & EC_MASK_13BIT) as u32;
     word |= ((imag & EC_MASK_13BIT) as u32) << 13;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 2 14-bit real samples into an array of bytes.
@@ -774,7 +774,7 @@ pub fn encode_14bit_real(input: [u16; 2]) -> [u8; 4] {
     word |= (input[0] & EC_MASK_14BIT) as u32;
     word |= ((input[1] & EC_MASK_14BIT) as u32) << 14;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode a 14-bit complex sample into an array of bytes.
@@ -784,7 +784,7 @@ pub fn encode_14bit_complex(real: u16, imag: u16) -> [u8; 4] {
     word |= (real & EC_MASK_14BIT) as u32;
     word |= ((imag & EC_MASK_14BIT) as u32) << 14;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 2 15-bit real samples into an array of bytes.
@@ -794,7 +794,7 @@ pub fn encode_15bit_real(input: [u16; 2]) -> [u8; 4] {
     word |= (input[0] & EC_MASK_15BIT) as u32;
     word |= ((input[1] & EC_MASK_15BIT) as u32) << 15;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode a 15-bit complex sample into an array of bytes.
@@ -804,7 +804,7 @@ pub fn encode_15bit_complex(real: u16, imag: u16) -> [u8; 4] {
     word |= (real & EC_MASK_15BIT) as u32;
     word |= ((imag & EC_MASK_15BIT) as u32) << 15;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode 2 16-bit real samples into an array of bytes.
@@ -814,7 +814,7 @@ pub fn encode_16bit_real(input: [u16; 2]) -> [u8; 4] {
     word |= input[0] as u32;
     word |= (input[1] as u32) << 16;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 /// Encode a 16-bit complex sample into an array of bytes.
@@ -824,7 +824,7 @@ pub fn encode_16bit_complex(real: u16, imag: u16) -> [u8; 4] {
     word |= real as u32;
     word |= (imag as u32) << 16;
 
-    return word.to_le_bytes()
+    return word.to_le_bytes();
 }
 
 #[cfg(test)]
@@ -1026,7 +1026,7 @@ mod tests {
             1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
             0, 1, 0,
         ];
-        assert_eq!(encode_1bit_real(test_in),result)
+        assert_eq!(encode_1bit_real(test_in), result)
     }
 
     #[test]
@@ -1036,174 +1036,174 @@ mod tests {
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         );
-        assert_eq!(encode_1bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_1bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_2bit_real() {
         let result: [u8; 4] = (0b01010101010101010101010101010101_u32).to_le_bytes();
         let test_in: [u8; 16] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-        assert_eq!(encode_2bit_real(test_in),result)
+        assert_eq!(encode_2bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_2bit_complex() {
         let result: [u8; 4] = (0b01010101010101010101010101010101_u32).to_le_bytes();
         let test_in: ([u8; 8], [u8; 8]) = ([1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1]);
-        assert_eq!(encode_2bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_2bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_3bit_real() {
         let result: [u8; 4] = (0b00010101010101010101010101010101_u32).to_le_bytes();
         let test_in: [u8; 10] = [5, 2, 5, 2, 5, 2, 5, 2, 5, 2];
-        assert_eq!(encode_3bit_real(test_in),result)
+        assert_eq!(encode_3bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_3bit_complex() {
         let result: [u8; 4] = (0b00010101010101010101010101010101_u32).to_le_bytes();
         let test_in: ([u8; 5], [u8; 5]) = ([5, 5, 5, 5, 5], [2, 2, 2, 2, 2]);
-        assert_eq!(encode_3bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_3bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_4bit_real() {
         let result: [u8; 4] = (0b01010101010101010101010101010101_u32).to_le_bytes();
         let test_in: [u8; 8] = [5, 5, 5, 5, 5, 5, 5, 5];
-        assert_eq!(encode_4bit_real(test_in),result)
+        assert_eq!(encode_4bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_4bit_complex() {
         let result: [u8; 4] = (0b01010101010101010101010101010101_u32).to_le_bytes();
         let test_in: ([u8; 4], [u8; 4]) = ([5, 5, 5, 5], [5, 5, 5, 5]);
-        assert_eq!(encode_4bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_4bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_6bit_real() {
         let result: [u8; 4] = (0b00010101010101010101010101010101_u32).to_le_bytes();
         let test_in: [u8; 5] = [21, 21, 21, 21, 21];
-        assert_eq!(encode_6bit_real(test_in),result)
+        assert_eq!(encode_6bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_6bit_complex() {
         let result: [u8; 4] = (0b00000000010101010101010101010101_u32).to_le_bytes();
         let test_in: ([u8; 2], [u8; 2]) = ([21, 21], [21, 21]);
-        assert_eq!(encode_6bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_6bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_7bit_real() {
         let result: [u8; 4] = (0b00000101010101010101010101010101_u32).to_le_bytes();
         let test_in: [u8; 4] = [85, 42, 85, 42];
-        assert_eq!(encode_7bit_real(test_in),result)
+        assert_eq!(encode_7bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_7bit_complex() {
         let result: [u8; 4] = (0b00000101010101010101010101010101_u32).to_le_bytes();
         let test_in: ([u8; 2], [u8; 2]) = ([85, 85], [42, 42]);
-        assert_eq!(encode_7bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_7bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_8bit_real() {
         let result: [u8; 4] = (0b01010101010101010101010101010101_u32).to_le_bytes();
         let test_in: [u8; 4] = [85, 85, 85, 85];
-        assert_eq!(encode_8bit_real(test_in),result)
+        assert_eq!(encode_8bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_8bit_complex() {
         let result: [u8; 4] = (0b01010101010101010101010101010101_u32).to_le_bytes();
         let test_in: ([u8; 2], [u8; 2]) = ([85, 85], [85, 85]);
-        assert_eq!(encode_8bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_8bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_11bit_real() {
         let result: [u8; 4] = (0b00000000000101010101010101010101_u32).to_le_bytes();
         let test_in: [u16; 2] = [0b10101010101, 0b01010101010];
-        assert_eq!(encode_11bit_real(test_in),result)
+        assert_eq!(encode_11bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_11bit_complex() {
         let result: [u8; 4] = (0b00000000000101010101010101010101_u32).to_le_bytes();
         let test_in: (u16, u16) = (0b10101010101, 0b01010101010);
-        assert_eq!(encode_11bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_11bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_12bit_real() {
         let result: [u8; 4] = (0b00000000010101010101010101010101_u32).to_le_bytes();
         let test_in: [u16; 2] = [0b010101010101, 0b010101010101];
-        assert_eq!(encode_12bit_real(test_in),result)
+        assert_eq!(encode_12bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_12bit_complex() {
         let result: [u8; 4] = (0b00000000010101010101010101010101_u32).to_le_bytes();
         let test_in: (u16, u16) = (0b010101010101, 0b010101010101);
-        assert_eq!(encode_12bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_12bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_13bit_real() {
         let result: [u8; 4] = (0b00000001010101010101010101010101_u32).to_le_bytes();
         let test_in: [u16; 2] = [0b1010101010101, 0b0101010101010];
-        assert_eq!(encode_13bit_real(test_in),result)
+        assert_eq!(encode_13bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_13bit_complex() {
         let result: [u8; 4] = (0b00000001010101010101010101010101_u32).to_le_bytes();
         let test_in: (u16, u16) = (0b1010101010101, 0b0101010101010);
-        assert_eq!(encode_13bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_13bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_14bit_real() {
         let result: [u8; 4] = (0b00000101010101010101010101010101_u32).to_le_bytes();
         let test_in: [u16; 2] = [0b01010101010101, 0b01010101010101];
-        assert_eq!(encode_14bit_real(test_in),result)
+        assert_eq!(encode_14bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_14bit_complex() {
         let result: [u8; 4] = (0b00000101010101010101010101010101_u32).to_le_bytes();
         let test_in: (u16, u16) = (0b01010101010101, 0b01010101010101);
-        assert_eq!(encode_14bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_14bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_15bit_real() {
         let result: [u8; 4] = (0b00010101010101010101010101010101_u32).to_le_bytes();
         let test_in: [u16; 2] = [0b101010101010101, 0b010101010101010];
-        assert_eq!(encode_15bit_real(test_in),result)
+        assert_eq!(encode_15bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_15bit_complex() {
         let result: [u8; 4] = (0b00010101010101010101010101010101_u32).to_le_bytes();
         let test_in: (u16, u16) = (0b101010101010101, 0b010101010101010);
-        assert_eq!(encode_15bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_15bit_complex(test_in.0, test_in.1), result)
     }
 
     #[test]
     fn test_encode_16bit_real() {
         let result: [u8; 4] = (0b01010101010101010101010101010101_u32).to_le_bytes();
         let test_in: [u16; 2] = [0b0101010101010101, 0b0101010101010101];
-        assert_eq!(encode_16bit_real(test_in),result)
+        assert_eq!(encode_16bit_real(test_in), result)
     }
 
     #[test]
     fn test_encode_16bit_complex() {
         let result: [u8; 4] = (0b01010101010101010101010101010101_u32).to_le_bytes();
         let test_in: (u16, u16) = (0b0101010101010101, 0b0101010101010101);
-        assert_eq!(encode_16bit_complex(test_in.0, test_in.1),result)
+        assert_eq!(encode_16bit_complex(test_in.0, test_in.1), result)
     }
 }

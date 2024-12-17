@@ -18,7 +18,7 @@ pub(crate) const MASK_STATION_ID: u32 = 0b00000000000000001111111111111111;
 
 /// Construct a [`VDIFHeader`] from a [`VDIFFrame`].
 pub fn decode_frame_header(frame: &VDIFFrame) -> VDIFHeader {
-    return decode_header(frame.as_slice()[0..8].try_into().unwrap())
+    return decode_header(frame.as_slice()[0..8].try_into().unwrap());
 }
 
 /// Construct a [`VDIFHeader`] from a series of eight `u32`s.
@@ -48,8 +48,8 @@ pub fn decode_header(words: [u32; 8]) -> VDIFHeader {
         edv0: edv0,
         edv1: edv1,
         edv2: edv2,
-        edv3: edv3
-    }
+        edv3: edv3,
+    };
 }
 
 /// Decode the zeroth word of a VDIFHeader
@@ -114,7 +114,7 @@ pub fn encode_header(header: VDIFHeader) -> [u32; 8] {
     let w6 = header.edv2;
     let w7 = header.edv3;
 
-    return [w0, w1, w2, w3, w4, w5, w6, w7]
+    return [w0, w1, w2, w3, w4, w5, w6, w7];
 }
 
 #[cfg(test)]
@@ -141,7 +141,7 @@ mod tests {
             edv0: 0,
             edv1: 0,
             edv2: 0,
-            edv3: 0
+            edv3: 0,
         };
 
         let cpy = test_header;

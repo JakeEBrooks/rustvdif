@@ -1,5 +1,10 @@
 //! Provides functionality for interacting with VDIF headers and header information.
 
+use chrono::{
+    naive::{NaiveDate, NaiveDateTime},
+    Datelike, NaiveTime, TimeDelta,
+};
+
 /// Station identifiers can be either a two character ASCII string, or a numeric ID.
 pub enum StationID {
     /// The station ID as a two character ASCII string
@@ -12,10 +17,12 @@ impl StationID {
     /// Encode this station ID into a `u16` VDIF header field.
     pub fn encode(self) -> u16 {
         match self {
-            Self::StringID(s) => u16::from_be_bytes(s.as_bytes().try_into().expect("Tried to encode a StationID with more/less than two ASCII characters!")),
-            Self::NumericID(id) => {
-                id
+            Self::StringID(s) => {
+                u16::from_be_bytes(s.as_bytes().try_into().expect(
+                    "Tried to encode a StationID with more/less than two ASCII characters!",
+                ))
             }
+            Self::NumericID(id) => id,
         }
     }
 }
@@ -63,27 +70,32 @@ pub struct VDIFHeader {
 impl VDIFHeader {
     /// Get the total size in bytes of the associated VDIF frame.
     pub fn bytesize(&self) -> u32 {
-        return self.size*8
+        return self.size * 8;
     }
 
     /// Get the total size in 32-bit words of the associated VDIF frame.
     pub fn wordsize(&self) -> u32 {
-        return self.bytesize()/4
+        return self.bytesize() / 4;
     }
 
     /// Get the total size in bytes of the associated VDIF payload.
     pub fn data_bytesize(&self) -> u32 {
-        return self.bytesize() - 32
+        return self.bytesize() - 32;
     }
 
     /// Get the total size in 32-bit words of the associated VDIF payload.
     pub fn data_wordsize(&self) -> u32 {
-        return (self.bytesize() - 32)/4
+        return (self.bytesize() - 32) / 4;
     }
 
     /// Get the number of channels contained within the associated VDIF payload.
     pub fn channelno(&self) -> usize {
-        return 1usize << self.channels
+        return 1usize << self.channels;
+    }
+
+    /// Get a [`NaiveDateTime`] representing the `epoch` and `time` of the associated VDIF frame.
+    pub fn date(&self) -> NaiveDateTime {
+        return vdiftime_to_date(self.epoch, self.time);
     }
 
     /// Return the station ID as either a string or a number.
@@ -111,6 +123,33 @@ impl std::fmt::Display for VDIFHeader {
         write!(f, "(Frame: {}, Thread: {}, Time: {}, Size: {}, Channels: {}, Bits/sample: {}, Real: {}, Valid: {}, Station: {} ({}))",
         self.frameno, self.thread, self.time, self.size*8, 1 << self.channels, self.bits_per_sample, self.is_real, self.is_valid, station, self.station)
     }
+}
+
+/// Convert a VDIF `epoch` and `time` value to a [`NaiveDateTime`] from the [`chrono`] library.
+pub fn vdiftime_to_date(epoch: u8, time: u32) -> NaiveDateTime {
+    let years = epoch / 2;
+    let months = if epoch % 2 > 0 { 7 } else { 1 };
+    let delta = TimeDelta::new(time as i64, 0).expect("Incorrect time supplied to chrono");
+
+    return NaiveDateTime::new(
+        NaiveDate::from_ymd_opt(2000 + years as i32, months as u32, 1)
+            .expect("Incorrect epoch supplied to chrono"),
+        NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+    ) + delta;
+}
+
+/// Convert a [`NaiveDateTime`] from the [`chrono`] library to a VDIF `epoch` and `time`.
+pub fn vdiftime_from_date(datetime: NaiveDateTime) -> (u8, u32) {
+    let epoch_month = if datetime.month() > 6 { 7 } else { 1 };
+    let epoch_date = NaiveDate::from_ymd_opt(datetime.year(), epoch_month, 1).unwrap();
+    let time = datetime - NaiveDateTime::new(epoch_date, NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+
+    let mut epoch = (datetime.year() - 2000) * 2;
+    if datetime.month() > 6 {
+        epoch += 1
+    };
+
+    return (epoch as u8, time.num_seconds() as u32);
 }
 
 #[cfg(test)]
