@@ -1,18 +1,15 @@
-//! Types and methods to assist in sending and receiving VDIF frames over UDP, using the VDIF Transport Protocol (VTP).
-//!
-//! The VDIF Transport Protocol is defined [here](https://vlbi.org/wp-content/uploads/2019/03/2012.10.16_VTP_0.9.7.pdf)
-//!
-//! This implementation assumes that one datagram consists of a single, complete VDIF frame with an additional 64-bit integer
-//! inserted at the start of the datagram.
-
 use std::io::Result;
 use std::net::{ToSocketAddrs, UdpSocket};
 
 use crate::VDIFFrame;
 
-/// A simple wrapper around a [`UdpSocket`] to [`recv`](std::net::UdpSocket::recv) frames.
+/// Reads VDIF frames using the VDIF Transport Protocol (VTP) from a [`UdpSocket`].
+/// 
+/// The VDIF Transport Protocol is defined [here](https://vlbi.org/wp-content/uploads/2019/03/2012.10.16_VTP_0.9.7.pdf).
 ///
-/// Does not perform any logic or buffering, so all the normal rules and expectations around UDP apply.
+/// Does not perform any logic or buffering, so all the normal rules and expectations around UDP apply. This implementation 
+/// assumes that one datagram consists of a single, complete VDIF frame with an additional 64-bit integer
+/// inserted at the start of the datagram.
 pub struct VDIFVTP {
     /// The underlying [`UdpSocket`].
     pub sock: UdpSocket,
@@ -54,7 +51,7 @@ impl VDIFVTP {
     }
 }
 
-/// Allows reading VDIF frames in order. Uses the VTP sequence number instead of the VDIF frame number.
+/// Allows reading VDIF frames from a [`UdpSocket`] in order. Uses the VTP sequence number instead of the VDIF frame number.
 ///
 /// More specifically, [`VDIFOrderedVTP`] implements a simple sequence counting algorithm to ensure that the frame
 /// returned by [`next_frame`](VDIFOrderedVTP::next_frame) does not precede the frame previously fetched by the

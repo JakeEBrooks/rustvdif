@@ -1,5 +1,3 @@
-//! Provides functionality for encoding/decoding VDIF headers.
-
 use crate::frame::VDIFFrame;
 use crate::header::VDIFHeader;
 
@@ -16,12 +14,12 @@ pub(crate) const MASK_BITS_PER_SAMPLE: u32 = 0b01111100000000000000000000000000;
 pub(crate) const MASK_THREAD_ID: u32 = 0b00000011111111110000000000000000;
 pub(crate) const MASK_STATION_ID: u32 = 0b00000000000000001111111111111111;
 
-/// Construct a [`VDIFHeader`] from a [`VDIFFrame`].
+/// Decode the [`VDIFHeader`] of a [`VDIFFrame`].
 pub fn decode_frame_header(frame: &VDIFFrame) -> VDIFHeader {
     return decode_header(frame.as_slice()[0..8].try_into().unwrap());
 }
 
-/// Construct a [`VDIFHeader`] from a series of eight `u32`s.
+/// Decode a [`VDIFHeader`] from an array of eight `u32`s.
 pub fn decode_header(words: [u32; 8]) -> VDIFHeader {
     let (is_valid, is_legacy, time) = decode_w0(words[0]);
     let (epoch, frameno) = decode_w1(words[1]);

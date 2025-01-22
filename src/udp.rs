@@ -1,16 +1,13 @@
-//! Types and methods to assist in sending and receiving VDIF frames using UDP.
-//!
-//! This implementation assumes that one datagram consists of a single, complete VDIF frame.
-
 use std::io::Result;
 use std::net::{ToSocketAddrs, UdpSocket};
 
 use crate::header_encoding::MASK_FRAME_NO;
 use crate::VDIFFrame;
 
-/// A simple wrapper around a [`UdpSocket`] to [`recv`](std::net::UdpSocket::recv) frames.
+/// Reads VDIF frames from a [`UdpSocket`].
 ///
-/// Does not perform any logic or buffering, so all the normal rules and expectations around UDP apply.
+/// Does not perform any logic or buffering, so all the normal rules and expectations around UDP apply. This implementation 
+/// assumes that one datagram consists of a single, complete VDIF frame.
 pub struct VDIFUDP {
     /// The underlying [`UdpSocket`].
     pub sock: UdpSocket,
@@ -41,7 +38,7 @@ impl VDIFUDP {
     }
 }
 
-/// Allows reading VDIF frames in order.
+/// Allows reading VDIF frames from a [`UdpSocket`] in order.
 ///
 /// More specifically, [`VDIFOrderedUDP`] implements a simple sequence counting algorithm to ensure that the frame
 /// returned by [`next_frame`](VDIFOrderedUDP::next_frame) does not precede the frame previously fetched by the

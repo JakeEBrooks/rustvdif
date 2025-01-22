@@ -1,11 +1,9 @@
-//! Provides functionality for interacting with VDIF headers and header information.
-
 use chrono::{
     naive::{NaiveDate, NaiveDateTime},
     Datelike, NaiveTime, TimeDelta,
 };
 
-/// Station identifiers can be either a two character ASCII string, or a numeric ID.
+/// VDIF station identifiers can be either a two character ASCII string, or a numeric ID.
 pub enum StationID {
     /// The station ID as a two character ASCII string
     StringID(String),

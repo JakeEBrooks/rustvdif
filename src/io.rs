@@ -1,5 +1,3 @@
-//! Implements the main [`VDIFReader`] and [`VDIFWriter`] types, as well as the [`VDIFRead`] and [`VDIFWrite`] traits.
-
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Error, ErrorKind, Read, Result, Write};
 use std::path::Path;

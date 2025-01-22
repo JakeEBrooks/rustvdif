@@ -1,5 +1,3 @@
-//! Implements [`VDIFFrame`].
-
 use crate::header::VDIFHeader;
 use crate::header_encoding::decode_frame_header;
 

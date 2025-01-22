@@ -28,9 +28,9 @@
 //!     }
 //! }
 //! ```
-//! For writing VDIF frames, see [`VDIFWriter`](crate::io::VDIFWriter).
+//! For writing VDIF frames, see [`VDIFWriter`].
 //!
-//! A [`VDIFReader`](crate::io::VDIFReader) accepts any type implementing [`Read`](std::io::Read), so the pattern is
+//! A [`VDIFReader`] accepts any type implementing [`Read`](std::io::Read), so the pattern is
 //! fairly similar even for other data sources. For example a [`TcpStream`](std::net::TcpStream) can be used
 //! instead of a [`File`](std::fs::File):
 //! ```rust,ignore
@@ -51,22 +51,25 @@
 //!
 //! This crate was designed with performance in mind, as is often needed when dealing with high data rate
 //! VDIF streams. As such, a minimal amount of memory allocations/copies are performed. Buffered IO is the default for
-//! [`VDIFReader`](crate::io::VDIFReader)s, to minimise expensive system calls.
+//! [`VDIFReader`]s, to minimise expensive system calls.
 //!
 //! In general, this library uses byte sizes for the frame size (header *and* payload), and assumes you know the size
 //! of the incoming/outgoing VDIF frames in advance.
 
-pub mod data_encoding;
-pub mod frame;
-pub mod header;
-pub mod header_encoding;
-pub mod io;
-pub mod sim;
-pub mod udp;
-pub mod vtp;
-
+pub mod payloadencoding;
+mod frame;
 pub use frame::VDIFFrame;
-pub use io::{VDIFRead, VDIFReader, VDIFWrite, VDIFWriter};
+mod header;
+pub use header::*;
+mod header_encoding;
+pub use header_encoding::{decode_frame_header, decode_header, encode_header};
+mod io;
+pub use io::*;
+pub mod sim;
+mod udp;
+pub use udp::*;
+mod vtp;
+pub use vtp::*;
 
 // VDIF is an explicitly little endian format. This makes handling it finnicky on big endian targets. A lot of the unsafe
 // operations rely on being run on a little endian target and are faster as a result. If a user needs big-endian
