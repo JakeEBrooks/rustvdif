@@ -1,10 +1,6 @@
-use crate::header::VDIFHeader;
-use crate::header_encoding::decode_frame_header;
-
 /// A VDIF frame.
 ///
-/// Each [`VDIFFrame`] simply contains a heap allocated slice of `u32`s. The header is decoded when you call
-/// [`get_header`](VDIFFrame::get_header), so you don't pay a cost for simply creating this type.
+/// Each [`VDIFFrame`] simply contains a heap allocated slice of `u32`s.
 #[derive(Debug)]
 pub struct VDIFFrame {
     data: Box<[u32]>,
@@ -14,7 +10,7 @@ impl VDIFFrame {
     /// Construct a [`VDIFFrame`] from a raw `u32` slice.
     pub fn new(data: Box<[u32]>) -> Self {
         assert!(
-            data.len() % 2 == 0,
+            data.len() % 8 == 0,
             "VDIF frames must be a multiple of 8 bytes in size."
         );
         return Self { data: data };
@@ -23,7 +19,7 @@ impl VDIFFrame {
     /// Construct a [`VDIFFrame`] by copying the contents of `data`.
     pub fn from_slice(data: &[u32]) -> Self {
         assert!(
-            data.len() % 2 == 0,
+            data.len() % 8 == 0,
             "VDIF frames must be a multiple of 8 bytes in size."
         );
         return Self {
@@ -42,19 +38,11 @@ impl VDIFFrame {
         };
     }
 
-    /// Get a single `u32` word from this frame.
-    pub fn get_word(&self, ind: usize) -> u32 {
-        return self.data[ind];
-    }
-
-    /// Get a single `u32` word from the payload. Equivalent to `get_word(8 + ind)`.
-    pub fn get_data_word(&self, ind: usize) -> u32 {
-        return self.data[8 + ind];
-    }
-
-    /// Construct a [`VDIFHeader`] from this frame.
-    pub fn get_header(&self) -> VDIFHeader {
-        return decode_frame_header(&self);
+    /// Construct a completely empty [`VDIFFrame`] with the invalid bit set.
+    pub fn invalid(frame_size: usize) -> Self {
+        let mut out = Self::empty(frame_size);
+        out.as_mut_slice()[0] |= 0x80000000;
+        return out;
     }
 
     /// Get a reference to the payload portion of this frame.

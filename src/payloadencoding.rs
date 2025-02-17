@@ -1,4 +1,4 @@
-//! Provides functionality for encoding/decoding VDIF payloads.
+//! Functions for encoding/decoding VDIF payloads.
 //!
 //! Note that these functions *may* not be the most performant way of doing what you need, but are provided for
 //! convenience, or for when you just want to inspect a VDIF frame's payload.
