@@ -1,3 +1,5 @@
+use crate::decoding::header::decode_is_valid;
+
 /// A VDIF frame.
 ///
 /// Each [`VDIFFrame`] simply contains a heap allocated slice of `u32`s.
@@ -10,7 +12,7 @@ impl VDIFFrame {
     /// Construct a [`VDIFFrame`] from a raw `u32` slice.
     pub fn new(data: Box<[u32]>) -> Self {
         assert!(
-            data.len() % 8 == 0,
+            data.len() % 2 == 0,
             "VDIF frames must be a multiple of 8 bytes in size."
         );
         return Self { data: data };
@@ -19,7 +21,7 @@ impl VDIFFrame {
     /// Construct a [`VDIFFrame`] by copying the contents of `data`.
     pub fn from_slice(data: &[u32]) -> Self {
         assert!(
-            data.len() % 8 == 0,
+            data.len() % 2 == 0,
             "VDIF frames must be a multiple of 8 bytes in size."
         );
         return Self {
@@ -27,8 +29,19 @@ impl VDIFFrame {
         };
     }
 
-    /// Construct a completely empty [`VDIFFrame`].
-    pub fn empty(frame_size: usize) -> Self {
+    /// Construct a [`VDIFFrame`] by copying the contents of a `&[u8]` byte slice.
+    pub fn from_byte_slice(data: &[u8]) -> Self {
+        assert!(
+            data.len() % 8 == 0,
+            "VDIF frames must be a multiple of 8 bytes in size."
+        );
+        return Self { data: Box::from(
+            unsafe { std::slice::from_raw_parts(data.as_ptr() as *const u32, data.len() / 4) }
+        ) }
+    }
+
+    /// Construct a completely empty [`VDIFFrame`] with all header and data bytes set to zero.
+    pub fn new_empty(frame_size: usize) -> Self {
         assert!(
             frame_size % 8 == 0,
             "VDIF frames must be a multiple of 8 bytes in size."
@@ -38,9 +51,9 @@ impl VDIFFrame {
         };
     }
 
-    /// Construct a completely empty [`VDIFFrame`] with the invalid bit set.
-    pub fn invalid(frame_size: usize) -> Self {
-        let mut out = Self::empty(frame_size);
+    /// Construct a completely empty [`VDIFFrame`] with the invalid bit set, and all other bits set to zero.
+    pub fn new_invalid(frame_size: usize) -> Self {
+        let mut out = Self::new_empty(frame_size);
         out.as_mut_slice()[0] |= 0x80000000;
         return out;
     }
@@ -87,5 +100,11 @@ impl VDIFFrame {
         return unsafe {
             std::slice::from_raw_parts_mut(self.data.as_mut_ptr() as *mut u8, self.data.len() * 4)
         };
+    }
+}
+
+impl std::fmt::Display for VDIFFrame {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", decode_is_valid(&self))
     }
 }

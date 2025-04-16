@@ -1,40 +1,35 @@
 #![warn(missing_docs)]
+//! A rust crate for interacting with data encoded in the VLBI Data Interchange Format (VDIF), commonly used in radio astronomy experiments. 
+//! The VDIF data format is defined in the VDIF specification, found [here](https://vlbi.org/vlbi-standards/vdif/).
+//! 
+//! Check out the [examples](./examples) for more information on using this library.
 
-//! A rust crate for interacting with data encoded in the VLBI Data Interchange Format (VDIF), commonly used in
-//! radio astronomy experiments. The VDIF data format is defined in the VDIF specification,
-//! found [here](https://vlbi.org/vlbi-standards/vdif/).
-//!
-//! This is a minimalist crate designed to relieve the problem of dealing with VDIF data in your own applications.
-//!
-//! With `rustvdif` you can:
-//!
-//! - Read VDIF frames from and write to various sources, including files, TCP Streams and UDP Sockets.
-//! - Access VDIF data encoded using the VDIF Transport Protocol (VTP)
-//! - Easily access fields within a VDIF header.
-//! - Access VDIF payload data in `u32` or byte form.
-//! - Encode and decode VDIF payloads, with up to 16 bits/sample.
-//!
-//! In general, this library uses byte sizes for the frame size (the payload size plus 32), and assumes you know the size
-//! of the incoming/outgoing VDIF frames in advance.
 
 mod frame;
-pub mod payloadencoding;
 pub use frame::VDIFFrame;
-mod header;
-pub use header::*;
-pub mod headerencoding;
 mod io;
-pub use io::*;
-mod udp;
-pub use udp::*;
-mod vtp;
-pub use vtp::*;
+pub use io::{read_frame, write_frame, read_vtp_frame, write_vtp_frame};
 
-pub(crate) const DEFAULT_FRAMESIZE: usize = 5032;
+pub mod net;
 
-// VDIF is an explicitly little endian format. This makes handling it finnicky on big endian targets. A lot of the unsafe
-// operations rely on being run on a little endian target and are faster as a result. If a user needs big-endian
-// compatibility it is possible, just let me know.
+pub mod encoding;
+pub mod decoding;
 
+// Don't support big endian targets
 #[cfg(target_endian = "big")]
 compile_error!("RustVDIF does not currently support big-endian targets");
+
+pub(crate) mod header_masks {
+    pub(crate) const MASK_IS_VALID: u32 = 0x80000000;
+    pub(crate) const MASK_IS_LEGACY: u32 = 0x40000000;
+    pub(crate) const MASK_TIME: u32 = 0x3FFFFFFF;
+    pub(crate) const MASK_REF_EPOCH: u32 = 0x3F000000;
+    pub(crate) const MASK_FRAME_NO: u32 = 0x00FFFFFF;
+    pub(crate) const MASK_VERSION_NO: u32 = 0xE0000000;
+    pub(crate) const MASK_LOG2_CHANNELS: u32 = 0x1F000000;
+    pub(crate) const MASK_SIZE8: u32 = 0x00FFFFFF;
+    pub(crate) const MASK_IS_REAL: u32 = 0x80000000;
+    pub(crate) const MASK_BITS_PER_SAMPLE: u32 = 0x7C000000;
+    pub(crate) const MASK_THREAD_ID: u32 = 0x03FF0000;
+    pub(crate) const MASK_STATION_ID: u32 = 0x0000FFFF;
+}
