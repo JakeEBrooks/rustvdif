@@ -6,31 +6,13 @@ This is a minimalist crate designed to relieve the problem of dealing with VDIF 
 
 With `rustvdif` you can:
 
-- Read VDIF frames from and write to various sources, including files, TCP Streams and UDP Sockets.
-- Access VDIF data encoded using the VDIF Transport Protocol (VTP)
-- Easily access fields within a VDIF header.
-- Access VDIF payload data in `u32` or byte form.
-- Encode and decode VDIF payloads, with up to 16 bits/sample.
+- Read VDIF frames from and write to various sources, including files and sockets
+- Read/write VDIF data encoded using the VDIF Transport Protocol (VTP)
+- Easily encode and decode VDIF header fields
+- Access VDIF payload data in `u32` or byte form
+- Encode and decode VDIF payloads, with up to 32 bits/sample
 
 Documentation is available [here](https://docs.rs/rustvdif/latest/rustvdif/).
-
-## Usage
-
-Reading VDIF frames is made easy by wrapping around types implementing the Rust [Read](https://doc.rust-lang.org/std/io/trait.Read.html) trait.
-
-For example, frames can be easily read from a file:
-
-```rust
-fn main() {
-    // A file of 8032 byte VDIF frames
-    let mut file = VDIFReader::open("path/to/my/vdif", 8032).unwrap();
-    // Read the first 100 frames and print header information on each one
-    for _ in 0..100 {
-        let frame = file.read_frame().unwrap();
-        println!("{}", frame.get_header());
-    }
-}
-```
 
 ## Contributing
 

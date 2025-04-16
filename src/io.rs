@@ -1,110 +1,41 @@
-use std::io::{Error, ErrorKind, Read, Result, Write};
+use std::io::{Read, Result, Write};
 
 use crate::VDIFFrame;
 
-/// A trait indicating a type that can read VDIF frames.
-pub trait VDIFRead {
-    /// Read a [`VDIFFrame`]
-    fn read_frame(&mut self) -> Result<VDIFFrame>;
+/// Read a VDIF frame from any [`Read`] type
+pub fn read_frame<T: Read>(reader: &mut T, frame_size: usize) -> Result<VDIFFrame> {
+    // Allocate but don't initialise the heap memory for the output frame
+    let mut buf: Box<[std::mem::MaybeUninit<u32>]> = Box::new_uninit_slice(frame_size / 4);
+    // Read bytes into the frame memory
+    let bytes_read = reader.read(
+        unsafe { std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u8, frame_size) }
+    )?;
+
+    // If we didn't get exactly one frame, return EOF
+    if bytes_read != frame_size {
+        return Err(std::io::Error::from(std::io::ErrorKind::UnexpectedEof))
+    }
+
+    return Ok(VDIFFrame::new(unsafe { buf.assume_init() }))
 }
 
-/// A trait indicating a type that can write VDIF frames.
-pub trait VDIFWrite {
-    /// Write a [`VDIFFrame`].
-    fn write_frame(&mut self, frame: &VDIFFrame) -> Result<()>;
+/// Read a VDIF frame from any [`Read`] type, along with its VTP sequence number
+pub fn read_vtp_frame<T: Read>(reader: &mut T, frame_size: usize) -> Result<(u64, VDIFFrame)> {
+    let mut seqbuf: [u8; 8] = [0; 8];
+    let seq_bytes_read = reader.read(&mut seqbuf)?;
+    assert_eq!(seq_bytes_read, 8, "Did not read a full VTP sequence number");
+
+    return Ok((u64::from_le_bytes(seqbuf), read_frame(reader, frame_size)?))
 }
 
-/// A type capable of reading VDIF frames from any source implementing [`Read`].
-pub struct VDIFReader<T: Read> {
-    inner: T,
-    frame_size: usize,
+/// Write a VDIF frame to any [`Write`] type
+pub fn write_frame<T: Write>(writer: &mut T, frame: VDIFFrame) -> Result<()> {
+    let _bytes_written = writer.write(frame.as_bytes())?;
+    return Ok(())
 }
 
-impl<T: Read> VDIFReader<T> {
-    /// Construct a new [`VDIFReader`] using `inner` and the specified frame size (total, in bytes).
-    pub fn new(inner: T, frame_size: usize) -> Self {
-        return Self {
-            inner: inner,
-            frame_size: frame_size,
-        };
-    }
-
-    /// Return a reference to the underlying reader.
-    pub fn get_ref(&self) -> &T {
-        return &self.inner;
-    }
-
-    /// Return a mutable reference to the underlying reader.
-    pub fn get_mut(&mut self) -> &mut T {
-        return &mut self.inner;
-    }
-
-    /// Consume `self` and return the underlying reader.
-    pub fn into_inner(self) -> T {
-        return self.inner;
-    }
-}
-
-impl<T: Read> VDIFRead for VDIFReader<T> {
-    fn read_frame(&mut self) -> Result<VDIFFrame> {
-        // Allocate a frame and read bytes into it
-        let mut outframe = VDIFFrame::empty(self.frame_size);
-        let bytes_read = self.inner.read(outframe.as_mut_bytes())?;
-
-        if bytes_read == 0 {
-            return Err(Error::new(ErrorKind::UnexpectedEof, "Reached EOF"));
-        } else if bytes_read != self.frame_size {
-            return Err(Error::new(
-                ErrorKind::InvalidData,
-                "Did not read a complete VDIF frame",
-            ));
-        }
-
-        return Ok(outframe);
-    }
-}
-
-/// A type capable of writing VDIF frames to any destination implementing [`Write`].
-pub struct VDIFWriter<T: Write> {
-    inner: T,
-    frame_size: usize,
-}
-
-impl<T: Write> VDIFWriter<T> {
-    /// Construct a new [`VDIFWriter`] using `inner` and the specified frame size (total, in bytes).
-    pub fn new(inner: T, frame_size: usize) -> Self {
-        // Default to a buffer of 10 frames
-        return Self {
-            inner: inner,
-            frame_size: frame_size,
-        };
-    }
-
-    /// Return a reference to the underlying writer.
-    pub fn get_ref(&self) -> &T {
-        return &self.inner;
-    }
-
-    /// Return a mutable reference to the underlying writer.
-    pub fn get_mut(&mut self) -> &mut T {
-        return &mut self.inner;
-    }
-
-    /// Consume self and return the underlying writer.
-    pub fn into_inner(self) -> T {
-        return self.inner;
-    }
-}
-
-impl<T: Write> VDIFWrite for VDIFWriter<T> {
-    fn write_frame(&mut self, frame: &VDIFFrame) -> Result<()> {
-        assert_eq!(
-            self.frame_size,
-            frame.bytesize(),
-            "VDIF frames must be {} bytes in size for this VDIFWriter",
-            self.frame_size
-        );
-        let _ = self.inner.write(frame.as_bytes())?;
-        return Ok(());
-    }
+/// Write a VDIF frame to any [`Write`] type, along with a `u64` VTP sequence number
+pub fn write_vtp_frame<T: Write>(writer: &mut T, seq: u64, frame: VDIFFrame) -> Result<()> {
+    let _bytes_written = writer.write(&seq.to_le_bytes())?;
+    return write_frame(writer, frame)
 }
