@@ -17,7 +17,7 @@ fn main() {
         encode_is_valid(&mut frame, false);
 
         // Write the frame to the file
-        write_frame(&mut file, frame).unwrap()
+        let _ = write_frame(&mut file, frame).unwrap();
     }
 
     // Now we want to read back the frames we just wrote, so first call rewind()
