@@ -29,13 +29,15 @@ pub fn read_vtp_frame<T: Read>(reader: &mut T, frame_size: usize) -> Result<(u64
 }
 
 /// Write a VDIF frame to any [`Write`] type
-pub fn write_frame<T: Write>(writer: &mut T, frame: VDIFFrame) -> Result<()> {
-    let _bytes_written = writer.write(frame.as_bytes())?;
-    return Ok(())
+pub fn write_frame<T: Write>(writer: &mut T, frame: VDIFFrame) -> Result<usize> {
+    return writer.write(frame.as_bytes())
 }
 
 /// Write a VDIF frame to any [`Write`] type, along with a `u64` VTP sequence number
-pub fn write_vtp_frame<T: Write>(writer: &mut T, seq: u64, frame: VDIFFrame) -> Result<()> {
-    let _bytes_written = writer.write(&seq.to_le_bytes())?;
-    return write_frame(writer, frame)
+pub fn write_vtp_frame<T: Write>(writer: &mut T, seq: u64, frame: VDIFFrame) -> Result<usize> {
+    let mut buf = vec![0u8; frame.bytesize()+8].into_boxed_slice();
+    buf[0..8].copy_from_slice(&seq.to_le_bytes());
+    buf[8..].copy_from_slice(frame.as_bytes());
+    let bytes_written = writer.write(&buf)?;
+    return Ok(bytes_written)
 }

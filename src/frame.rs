@@ -1,4 +1,4 @@
-use crate::decoding::header::decode_is_valid;
+use crate::decoding::header::{decode_bits_per_sample_1, decode_frameno, decode_is_real, decode_is_valid, decode_log2channels, decode_ref_epoch, decode_size8, decode_stationid, decode_threadid, decode_time};
 
 /// A VDIF frame.
 ///
@@ -105,6 +105,16 @@ impl VDIFFrame {
 
 impl std::fmt::Display for VDIFFrame {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", decode_is_valid(&self))
+        write!(f, "<Valid: {}, Time: {}, Epoch: {}, Frame: {}, Chans: {}, Size: {}, Real: {}, Bits per sample: {}, Thread: {}, Station: {}>",
+        decode_is_valid(&self),
+        decode_time(&self),
+        decode_ref_epoch(&self),
+        decode_frameno(&self),
+        1u8 << decode_log2channels(&self),
+        decode_size8(&self)*8,
+        decode_is_real(&self),
+        decode_bits_per_sample_1(&self)+1,
+        decode_threadid(&self),
+        decode_stationid(&self))
     }
 }
