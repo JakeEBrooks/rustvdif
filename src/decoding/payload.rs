@@ -5,13 +5,12 @@
 //!
 //! While this library supports uncommon bits per sample like 6 bit, you should try to stick to 2^n bits per sample
 //! (i.e. 1, 2, 4, 8, 16, 32) since they are more efficient to store in VDIF.
-//!
-//! Decoded samples are in chronological order, i.e. the most recent sample occupies the largest array index.
 
 // Other VDIF software uses a LUT for decoding the u32 word, but
 // writing it out as below seems to be at least the same speed, if not faster.
 // This is tested for 1 bit decoding, I assume it holds for higher bit depths since
-// they require less operations than 1 bit.
+// they require less operations than 1 bit. Though I guess a user may want to map
+// the samples to something else anyway
 
 const DC_MASK_1BIT: u32 = u32::MAX >> 31;
 const DC_MASK_2BIT: u32 = u32::MAX >> 30;

@@ -1,6 +1,6 @@
 [package]
 name = "rustvdif"
-version = "0.6.1"
+version = "0.6.2"
 authors = ["Jacob Brooks"]
 edition = "2021"
 description = "A Rust library for interacting with data encoded in the VLBI Data Interchange Format (VDIF)."

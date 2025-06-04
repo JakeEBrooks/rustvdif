@@ -7,6 +7,8 @@
 
 mod frame;
 pub use frame::VDIFFrame;
+mod header;
+pub use header::VDIFHeader;
 mod io;
 pub use io::{read_frame, write_frame, read_vtp_frame, write_vtp_frame};
 

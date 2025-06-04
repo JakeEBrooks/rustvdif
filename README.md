@@ -1,18 +1,19 @@
 # Rust VDIF
 
-A rust crate for interacting with data encoded in the VLBI Data Interchange Format (VDIF), commonly used in radio astronomy experiments. The VDIF data format is defined in the VDIF specification, found [here](https://vlbi.org/vlbi-standards/vdif/).
+A rust crate for interacting with data encoded in the VLBI Data Interchange Format (VDIF), commonly used in radio astronomy experiments. The VDIF data format is defined in the [VDIF specification](https://vlbi.org/vlbi-standards/vdif/).
 
 This is a minimalist crate designed to relieve the problem of dealing with VDIF data in your own applications.
 
 With `rustvdif` you can:
 
 - Read VDIF frames from and write to various sources, including files and sockets
+- Create and interact with VDIF headers
 - Read/write VDIF data encoded using the VDIF Transport Protocol (VTP)
 - Easily encode and decode VDIF header fields
 - Access VDIF payload data in `u32` or byte form
 - Encode and decode VDIF payloads, with up to 32 bits/sample
 
-Documentation is available [here](https://docs.rs/rustvdif/latest/rustvdif/).
+Documentation is available [here](https://docs.rs/rustvdif/latest/rustvdif/). If you haven't come across VDIF before, I recommend reading the VDIF specification linked above as it is actually quite readable.
 
 ## Contributing
 

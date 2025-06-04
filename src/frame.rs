@@ -1,4 +1,8 @@
-use crate::decoding::header::{decode_bits_per_sample_1, decode_frameno, decode_is_real, decode_is_valid, decode_log2channels, decode_ref_epoch, decode_size8, decode_stationid, decode_threadid, decode_time};
+use crate::{decoding::header::{decode_bits_per_sample_1, decode_frameno, decode_is_real, decode_is_valid, decode_log2channels, decode_ref_epoch, decode_size8, decode_stationid, decode_threadid, decode_time}, header_masks::{MASK_IS_VALID, MASK_SIZE8}, VDIFHeader};
+
+// It would be kind of insane to create a 8MB frame, so if the user tried to do this
+// something has probably gone wrong 
+const MAX_FRAME_SIZE: u32 = 8000000;
 
 /// A VDIF frame.
 ///
@@ -29,6 +33,15 @@ impl VDIFFrame {
         };
     }
 
+    /// Construct a [`VDIFFrame`] by using the information contained in a [`VDIFHeader`].
+    pub fn from_header(header: VDIFHeader) -> Self {
+        let size = (header.as_slice()[2] & MASK_SIZE8) * 8;
+        assert!(size < MAX_FRAME_SIZE, "Tried to create a VDIF frame larger than 8MB!");
+        let mut frame = Self::new_empty(size as usize);
+        frame.as_mut_slice()[0..8].copy_from_slice(header.as_slice());
+        return frame
+    }
+
     /// Construct a [`VDIFFrame`] by copying the contents of a `&[u8]` byte slice.
     pub fn from_byte_slice(data: &[u8]) -> Self {
         assert!(
@@ -54,7 +67,7 @@ impl VDIFFrame {
     /// Construct a completely empty [`VDIFFrame`] with the invalid bit set, and all other bits set to zero.
     pub fn new_invalid(frame_size: usize) -> Self {
         let mut out = Self::new_empty(frame_size);
-        out.as_mut_slice()[0] |= 0x80000000;
+        out.as_mut_slice()[0] |= MASK_IS_VALID;
         return out;
     }
 
