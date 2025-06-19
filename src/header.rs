@@ -1,3 +1,5 @@
+use std::mem::transmute;
+
 use crate::header_masks::*;
 
 /// A VDIF Header.
@@ -29,6 +31,16 @@ impl VDIFHeader {
         let mut hdr = Self::new();
         hdr.data[0] |= MASK_IS_VALID;
         return hdr
+    }
+
+    /// Construct a [`VDIFHeader`] from an array of `u32` words.
+    pub fn from_slice(data: [u32; 8]) -> Self {
+        return Self { data: data }
+    }
+
+    /// Construct a [`VDIFHeader`] from an array of bytes.
+    pub fn from_bytes(data: [u8; 32]) -> Self {
+        return Self { data: unsafe { transmute(data) } }
     }
 
     /// Get a reference to the underlying data.

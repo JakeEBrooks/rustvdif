@@ -5,7 +5,7 @@ use rustvdif::{encoding::header::{encode_bits_per_sample_1, encode_frameno, enco
 fn main() {
     // Create a UDP socket that we'll use to send our frames
     let sendsock = UdpSocket::bind("0.0.0.0:8000").unwrap();
-    // Shoft the sending operation into its own thread
+    // Shift the sending operation into its own thread
     std::thread::spawn(move || {
         // Connect to the loopback interface
         sendsock.connect("127.0.0.1:9096").unwrap();

@@ -1,7 +1,7 @@
 use crate::{decoding::header::{decode_bits_per_sample_1, decode_frameno, decode_is_real, decode_is_valid, decode_log2channels, decode_ref_epoch, decode_size8, decode_stationid, decode_threadid, decode_time}, header_masks::{MASK_IS_VALID, MASK_SIZE8}, VDIFHeader};
 
 // It would be kind of insane to create a 8MB frame, so if the user tried to do this
-// something has probably gone wrong 
+// something has probably gone terribly wrong 
 const MAX_FRAME_SIZE: u32 = 8000000;
 
 /// A VDIF frame.
@@ -69,6 +69,11 @@ impl VDIFFrame {
         let mut out = Self::new_empty(frame_size);
         out.as_mut_slice()[0] |= MASK_IS_VALID;
         return out;
+    }
+
+    /// Construct a [`VDIFHeader`] by copying the data from header part of `self`
+    pub fn get_header(&self) -> VDIFHeader {
+        return VDIFHeader::from_slice(self.data[0..8].try_into().unwrap())
     }
 
     /// Get a reference to the payload portion of this frame.
