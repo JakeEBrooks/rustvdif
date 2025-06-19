@@ -13,6 +13,9 @@ mod io;
 pub use io::{read_frame, write_frame, read_vtp_frame, write_vtp_frame};
 
 pub mod net;
+#[allow(missing_docs)]
+#[cfg(feature = "recording")]
+pub mod recording;
 
 pub mod encoding;
 pub mod decoding;

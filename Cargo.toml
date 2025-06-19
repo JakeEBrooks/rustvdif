@@ -7,3 +7,10 @@ description = "A Rust library for interacting with data encoded in the VLBI Data
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/JakeEBrooks/rustvdif"
+
+[features]
+recording = ["dep:libc"]
+
+[dependencies]
+libc = { version = "0.2.174", optional = true }
+tracing = "0.1.41"
