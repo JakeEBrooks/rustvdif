@@ -1,6 +1,6 @@
 use std::mem::transmute;
 
-use crate::header_masks::*;
+use crate::{header_masks::*, decoding::header::*};
 
 /// A VDIF Header.
 /// 
@@ -143,5 +143,71 @@ impl VDIFHeader {
     pub fn station(mut self, stationid: u16) -> Self {
         self.data[3] |= (stationid as u32) & MASK_STATION_ID;
         return self
+    }
+
+    /// Get the 'Invalid data' field.
+    pub fn get_valid(&self) -> bool {
+        return decode_is_valid(self.data[0])
+    }
+
+    /// Get the 'Legacy mode' field.
+    pub fn get_legacy(&self) -> bool {
+        return decode_is_legacy(self.data[0])
+    }
+
+    /// Get the 'Seconds from reference epoch' field.
+    pub fn get_time(&self) -> u32 {
+        return decode_time(self.data[0])
+    }
+
+    /// Get the 'Reference epoch for second count' field.
+    pub fn get_ref_epoch(&self) -> u8 {
+        return decode_ref_epoch(self.data[1])
+    }
+
+    /// Get the 'Data frame # within second' field.
+    pub fn get_frameno(&self) -> u32 {
+        return decode_frameno(self.data[1])
+    }
+
+    /// Get the 'VDIF version number' field.
+    pub fn get_version(&self) -> u8 {
+        return decode_version(self.data[2])
+    }
+
+    /// Get the 'log<sub>2</sub>(channelno)' field.
+    /// 
+    /// For example if you have 4 channels in your payload data, this will return 2.
+    pub fn get_log2channels(&self) -> u8 {
+        return decode_log2channels(self.data[2])
+    }
+
+    /// Get the 'Data frame length' field.
+    ///
+    /// Note this is the size of the data frame in **units of eight bytes**.
+    pub fn get_size8(&self) -> u32 {
+        return decode_size8(self.data[2])
+    }
+
+    /// Get the 'Data type' field.
+    pub fn get_real(&self) -> bool {
+        return decode_is_real(self.data[3])
+    }
+
+    /// Get the 'bits per sample' field.
+    /// 
+    /// This is the bit precision of each sample **minus one**.
+    pub fn get_bits_per_sample_1(&self) -> u8 {
+        return decode_bits_per_sample_1(self.data[3])
+    }
+
+    /// Get the 'Thread ID' field.
+    pub fn get_thread(&self) -> u16 {
+        return decode_threadid(self.data[3])
+    }
+
+    /// Get the 'Station ID' field.
+    pub fn get_station(&self) -> u16 {
+        return decode_stationid(self.data[3])
     }
 }

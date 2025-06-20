@@ -1,6 +1,6 @@
 use std::net::UdpSocket;
 
-use rustvdif::{encoding::header::{encode_bits_per_sample_1, encode_frameno, encode_is_real, encode_log2channels, encode_ref_epoch, encode_size8, encode_time}, net::udp::{recv_frame, send_frame}, VDIFFrame};
+use rustvdif::{net::udp::{recv_frame, send_frame}, VDIFFrame};
 
 fn main() {
     // Create a UDP socket that we'll use to send our frames
@@ -15,13 +15,13 @@ fn main() {
             let mut frame = VDIFFrame::new_empty(1024);
 
             // Set the header parameters we want
-            encode_time(&mut frame, 42);
-            encode_ref_epoch(&mut frame, 6);
-            encode_frameno(&mut frame, frameno);
-            encode_log2channels(&mut frame, 0); // single channel
-            encode_size8(&mut frame, 1024/8);
-            encode_is_real(&mut frame, true);
-            encode_bits_per_sample_1(&mut frame, 1); // 2 bit
+            frame.set_time(42);
+            frame.set_ref_epoch(6);
+            frame.set_frameno(frameno);
+            frame.set_log2channels(0); // single channel
+            frame.set_size8(1024/8);
+            frame.set_real(true);
+            frame.set_bits_per_sample_1(1); // 2 bit
 
             // Send the frame on the socket
             send_frame(&sendsock, &frame).unwrap();

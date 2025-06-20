@@ -1,5 +1,3 @@
-use rustvdif::decoding::header::*;
-use rustvdif::encoding::header::*;
 use rustvdif::VDIFFrame;
 
 use rustvdif::decoding::payload::*;
@@ -8,85 +6,85 @@ use rustvdif::encoding::payload::*;
 #[test]
 fn test_encode_is_valid() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_is_valid(&mut test_frame, true);
-    assert_eq!(true, decode_is_valid(&test_frame))
+    test_frame.set_valid(true);
+    assert_eq!(true, test_frame.get_valid())
 }
 
 #[test]
 fn test_encode_is_legacy() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_is_legacy(&mut test_frame, false);
-    assert_eq!(false, decode_is_legacy(&test_frame))
+    test_frame.set_legacy(false);
+    assert_eq!(false, test_frame.get_legacy())
 }
 
 #[test]
 fn test_encode_time() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_time(&mut test_frame, 12345);
-    assert_eq!(12345, decode_time(&test_frame))
+    test_frame.set_time(12345);
+    assert_eq!(12345, test_frame.get_time())
 }
 
 #[test]
 fn test_encode_ref_epoch() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_ref_epoch(&mut test_frame, 2);
-    assert_eq!(2, decode_ref_epoch(&test_frame))
+    test_frame.set_ref_epoch(2);
+    assert_eq!(2, test_frame.get_ref_epoch())
 }
 
 #[test]
 fn test_encode_frameno() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_frameno(&mut test_frame, 4001);
-    assert_eq!(4001, decode_frameno(&test_frame))
+    test_frame.set_frameno(4001);
+    assert_eq!(4001, test_frame.get_frameno())
 }
 
 #[test]
 fn test_encode_version() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_version(&mut test_frame, 2);
-    assert_eq!(2, decode_version(&test_frame))
+    test_frame.set_version(2);
+    assert_eq!(2, test_frame.get_version())
 }
 
 #[test]
 fn test_encode_log2channels() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_log2channels(&mut test_frame, 3);
-    assert_eq!(3, decode_log2channels(&test_frame))
+    test_frame.set_log2channels(3);
+    assert_eq!(3, test_frame.get_log2channels())
 }
 
 #[test]
 fn test_encode_size8() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_size8(&mut test_frame, 1032/8);
-    assert_eq!(1032/8, decode_size8(&test_frame))
+    test_frame.set_size8(1032/8);
+    assert_eq!(1032/8, test_frame.get_size8())
 }
 
 #[test]
 fn test_encode_is_real() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_is_real(&mut test_frame, true);
-    assert_eq!(true, decode_is_real(&test_frame))
+    test_frame.set_real(true);
+    assert_eq!(true, test_frame.get_real())
 }
 
 #[test]
 fn test_encode_bits_per_sample_1() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_bits_per_sample_1(&mut test_frame, 8);
-    assert_eq!(8, decode_bits_per_sample_1(&test_frame))
+    test_frame.set_bits_per_sample_1(8);
+    assert_eq!(8, test_frame.get_bits_per_sample_1())
 }
 
 #[test]
 fn test_encode_threadid() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_threadid(&mut test_frame, 5);
-    assert_eq!(5, decode_threadid(&test_frame))
+    test_frame.set_thread(5);
+    assert_eq!(5, test_frame.get_thread())
 }
 
 #[test]
 fn test_encode_stationid() {
     let mut test_frame = VDIFFrame::new_empty(1032);
-    encode_stationid(&mut test_frame, 42);
-    assert_eq!(42, decode_stationid(&test_frame))
+    test_frame.set_station(42);
+    assert_eq!(42, test_frame.get_station())
 }
 
 const TEST_DATA_WORD: u32 = u32::MAX;
