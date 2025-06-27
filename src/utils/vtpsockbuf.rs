@@ -6,7 +6,7 @@ use crate::VDIFFrame;
 
 /// A high performance VDIF/VTP packet receiver designed to handle large input data rates.
 /// 
-/// Internally uses the [`recvmmsg`] system call to reduce the overhead of going through the OS.
+/// Internally uses the [`recvmmsg`] system call to reduce the overhead of going through the OS with repeated calls to [`recv`](libc::recv).
 pub struct VTPSocketBuf {
     sock: UdpSocket,
     frame_cap: usize,

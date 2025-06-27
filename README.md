@@ -15,6 +15,13 @@ With `rustvdif` you can:
 
 Documentation is available [here](https://docs.rs/rustvdif/latest/rustvdif/). If you haven't come across VDIF before, I recommend reading the VDIF specification linked above as it is actually quite readable.
 
+## Extra features
+
+This crate also contains a number of utilities that are useful for building applications using VDIF data. These include:
+
+- A single-producer single-consumer lock-free ring buffer specifically for VDIF frames. Based on the [rtrb](https://github.com/mgeier/rtrb) crate
+- A UDP/VTP receiver type built specifically to utilise the [recvmmsg](https://man7.org/linux/man-pages/man2/recvmmsg.2.html) Linux system call, since VDIF frames are often received over UDP in large volumes
+
 ## Contributing
 
 I'd love to see contributions from the VLBI community, and if you have any suggestions or questions you can always reach out to me directly or open an issue.
