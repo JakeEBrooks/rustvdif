@@ -1,8 +1,16 @@
 #![warn(missing_docs)]
+#![deny(clippy::implicit_return)]
+#![allow(clippy::needless_return)]
+#![allow(clippy::type_complexity)]
 //! A rust crate for interacting with data encoded in the VLBI Data Interchange Format (VDIF), commonly used in radio astronomy experiments. 
 //! The VDIF data format is defined in the VDIF specification, found [here](https://vlbi.org/vlbi-standards/vdif/).
 //! 
 //! Check out the [examples](./examples) for more information on using this library.
+//! 
+//! In general, this library assumes that the user has some knowledge of the data stream they are trying to process, as is usually the case for streams
+//! of VDIF data. Therefore, much of the functionality of this library depends on the user knowing the size of the incoming VDIF frames in particular, as
+//! this massively simplfies the code and improves performance. Wherever the user sees a `frame_size` parameter, they should assume that this is the *size of the frame
+//! in bytes including the header*.
 
 
 mod frame;
@@ -13,9 +21,7 @@ mod io;
 pub use io::{read_frame, write_frame, read_vtp_frame, write_vtp_frame};
 
 pub mod net;
-#[allow(missing_docs)]
-#[cfg(feature = "recording")]
-pub mod recording;
+pub mod utils;
 
 pub mod encoding;
 pub mod decoding;

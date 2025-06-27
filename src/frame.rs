@@ -4,7 +4,7 @@ use crate::{decoding::header::*, header_masks::*, VDIFHeader};
 // something has probably gone terribly wrong 
 const MAX_FRAME_SIZE: u32 = 8000000;
 
-/// A VDIF frame.
+/// A VDIF Frame.
 ///
 /// Each [`VDIFFrame`] simply contains a heap allocated slice of `u32`s.
 #[derive(Debug)]
@@ -19,7 +19,7 @@ impl VDIFFrame {
             data.len() % 2 == 0,
             "VDIF frames must be a multiple of 8 bytes in size."
         );
-        return Self { data: data };
+        return Self { data };
     }
 
     /// Construct a [`VDIFFrame`] by copying the contents of `data`.
@@ -69,8 +69,8 @@ impl VDIFFrame {
 
     /// Construct a [`VDIFFrame`] by copying the information contained in a [`VDIFHeader`].
     pub fn from_header(header: VDIFHeader) -> Self {
-        let size = (header.as_slice()[2] & MASK_SIZE8) * 8;
-        assert!(size < MAX_FRAME_SIZE, "Tried to create a VDIF frame larger than 8MB!");
+        let size = header.get_size8() * 8;
+        debug_assert!(size < MAX_FRAME_SIZE, "Tried to create a VDIF frame larger than 8MB!");
         let mut frame = Self::new_empty(size as usize);
         frame.as_mut_slice()[0..8].copy_from_slice(header.as_slice());
         return frame
@@ -89,6 +89,11 @@ impl VDIFFrame {
     /// Get the length in `u32` words of this frame.
     pub fn len(&self) -> usize {
         return self.data.len();
+    }
+
+    /// Return true if `self` contains zero bytes.
+    pub fn is_empty(&self) -> bool {
+        return self.len() == 0
     }
 
     /// Get the size in bytes of this frame.
@@ -118,6 +123,16 @@ impl VDIFFrame {
         return unsafe {
             std::slice::from_raw_parts_mut(self.data.as_mut_ptr() as *mut u8, self.data.len() * 4)
         };
+    }
+
+    /// Return an unsafe pointer to the underlying data.
+    pub const fn as_ptr(&self) -> *const u32 {
+        return self.data.as_ptr()
+    }
+
+    /// Return an unsafe mutable pointer to the underlying data.
+    pub const fn as_mut_ptr(&mut self) -> *mut u32 {
+        return self.data.as_mut_ptr()
     }
 
     /// Set the 'Invalid data' field.
@@ -267,7 +282,7 @@ impl VDIFFrame {
 
 impl std::fmt::Display for VDIFFrame {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<Valid: {}, Time: {}, Epoch: {}, Frame: {}, Chans: {}, Size: {}, Real: {}, Bits per sample: {}, Thread: {}, Station: {}>",
+        return write!(f, "<Valid: {}, Time: {}, Epoch: {}, Frame: {}, Chans: {}, Size: {}, Real: {}, Bits per sample: {}, Thread: {}, Station: {}>",
         self.get_valid(),
         self.get_time(),
         self.get_ref_epoch(),

@@ -7,14 +7,14 @@ use rustvdif::encoding::payload::*;
 fn test_encode_is_valid() {
     let mut test_frame = VDIFFrame::new_empty(1032);
     test_frame.set_valid(true);
-    assert_eq!(true, test_frame.get_valid())
+    assert!(test_frame.get_valid())
 }
 
 #[test]
 fn test_encode_is_legacy() {
     let mut test_frame = VDIFFrame::new_empty(1032);
     test_frame.set_legacy(false);
-    assert_eq!(false, test_frame.get_legacy())
+    assert!(!test_frame.get_legacy())
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn test_encode_size8() {
 fn test_encode_is_real() {
     let mut test_frame = VDIFFrame::new_empty(1032);
     test_frame.set_real(true);
-    assert_eq!(true, test_frame.get_real())
+    assert!(test_frame.get_real())
 }
 
 #[test]

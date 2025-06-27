@@ -1,6 +1,6 @@
 use std::net::UdpSocket;
 
-use rustvdif::{net::udp::{recv_frame, send_frame}, VDIFFrame};
+use rustvdif::{net::{recv_frame, send_frame}, VDIFFrame};
 
 fn main() {
     // Create a UDP socket that we'll use to send our frames

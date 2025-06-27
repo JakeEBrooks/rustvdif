@@ -1,4 +1,10 @@
 //! Functionality for sending/receiving VDIF data over a network
 
-pub mod udp;
-pub mod vtp;
+mod udp;
+mod vtp;
+
+#[doc(inline)]
+pub use udp::*;
+
+#[doc(inline)]
+pub use vtp::*;

@@ -42,7 +42,7 @@ const DC_MASK_28BIT: u32 = u32::MAX >> 4;
 const DC_MASK_29BIT: u32 = u32::MAX >> 3;
 const DC_MASK_30BIT: u32 = u32::MAX >> 2;
 const DC_MASK_31BIT: u32 = u32::MAX >> 1;
-const DC_MASK_32BIT: u32 = u32::MAX >> 0;
+const DC_MASK_32BIT: u32 = u32::MAX;
 
 macro_rules! decode_func {
     ($name:ident; $samples:literal; $outty:ty; $mask:ident; $bits:literal) => {

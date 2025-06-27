@@ -35,12 +35,12 @@ impl VDIFHeader {
 
     /// Construct a [`VDIFHeader`] from an array of `u32` words.
     pub fn from_slice(data: [u32; 8]) -> Self {
-        return Self { data: data }
+        return Self { data }
     }
 
     /// Construct a [`VDIFHeader`] from an array of bytes.
     pub fn from_bytes(data: [u8; 32]) -> Self {
-        return Self { data: unsafe { transmute(data) } }
+        return Self { data: unsafe { transmute::<[u8; 32], [u32; 8]>(data) } }
     }
 
     /// Get a reference to the underlying data.

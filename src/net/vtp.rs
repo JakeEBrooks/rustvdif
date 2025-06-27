@@ -27,8 +27,8 @@ pub fn recv_vtp_frame(sock: &UdpSocket, frame_size: usize) -> Result<(u64, VDIFF
 /// Send a [`VDIFFrame`] to a [`UdpSocket`], along with a VTP sequence number
 pub fn send_vtp_frame(sock: &UdpSocket, seq: u64, frame: &VDIFFrame) -> Result<()> {
     let mut sendbuf: Box<[MaybeUninit<u8>]> = Box::new_uninit_slice(frame.bytesize() + 8);
-    sendbuf[0..8].copy_from_slice(unsafe { transmute(seq.to_le_bytes().as_slice()) });
-    sendbuf[8..frame.bytesize() + 8].copy_from_slice(unsafe { transmute(frame.as_bytes()) });
+    sendbuf[0..8].copy_from_slice(unsafe { transmute::<&[u8], &[std::mem::MaybeUninit<u8>]>(seq.to_le_bytes().as_slice()) });
+    sendbuf[8..frame.bytesize() + 8].copy_from_slice(unsafe { transmute::<&[u8], &[std::mem::MaybeUninit<u8>]>(frame.as_bytes()) });
     let sendbuf_init = unsafe { sendbuf.assume_init() };
     sock.send(&sendbuf_init)?;
     return Ok(())

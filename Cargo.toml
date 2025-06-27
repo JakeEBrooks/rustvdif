@@ -1,6 +1,6 @@
 [package]
 name = "rustvdif"
-version = "0.6.2"
+version = "0.7.0"
 authors = ["Jacob Brooks"]
 edition = "2021"
 description = "A Rust library for interacting with data encoded in the VLBI Data Interchange Format (VDIF)."
@@ -8,9 +8,6 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/JakeEBrooks/rustvdif"
 
-[features]
-recording = ["dep:libc"]
-
 [dependencies]
-libc = { version = "0.2.174", optional = true }
-tracing = "0.1.41"
+crossbeam-utils = "0.8.21"
+libc = "0.2.174"
